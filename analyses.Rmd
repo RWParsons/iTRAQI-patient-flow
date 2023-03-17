@@ -1,0 +1,142 @@
+---
+title: "analyses"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+data_dir <- "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"
+```
+
+```{r}
+df_facility_coords <- 
+  haven::read_spss(file.path(data_dir, "D_Table_FacilityDescription.sav")) %>%
+  select(facility = FACILITY_NAME_Clean, facility_latitude = Latitude, facility_longitude = Longitude)
+
+list.files(data_dir)
+
+
+
+
+
+df <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFile.sav")) %>% filter(SELECT==1)
+
+
+
+df2 <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFileSELECT.sav"))
+
+
+identical(
+  df %>% filter(SELECT==1) %>% select(-SELECT),
+  df2
+)
+
+df %>% filter(SELECT==1)
+
+get_dest_and_times <- function(id) {
+  df_short <- df %>%
+    filter(pu_id == id) %>%
+    select(Sequence, TimeWayPoint, DateTimePoints, X_COORD, Y_COORD, FacilityFixed) %>%
+    left_join(df_facility_coords, by = c("FacilityFixed" = "facility")) %>%
+    mutate(
+      x = coalesce(X_COORD, facility_longitude),
+      y = coalesce(Y_COORD, facility_latitude)
+    ) %>%
+    select(-c(X_COORD, facility_longitude, Y_COORD, facility_latitude))
+  
+  df_short %>%
+    slice(if(any(TimeWayPoint == "D_DEPART_SCENE")) 1:which.max(TimeWayPoint == "D_DEPART_SCENE") else row_number())
+  
+  
+  
+  df_short %>% 
+    filter(!is.na(x)) 
+  
+  browser()
+}
+
+
+df_ambulance <-
+  df %>%
+  group_by(pu_id) %>%
+  slice(if(any(TimeWayPoint == "D_DEPART_SCENE")) 1:which.max(TimeWayPoint == "D_DEPART_SCENE") else 0) %>%
+  fill(X_COORD, Y_COORD) %>%
+  ungroup()
+
+df_ambulance %>%
+  select(pu_id, SourceRecordID, TimeWayPoint, DateTimePoints) %>%
+  pivot_wider(names_from = TimeWayPoint, values_from = DateTimePoints) %>%
+  mutate(scene_duration_mins = as.numeric(difftime(D_DEPART_SCENE, D_ON_SCENE, units = "mins"))) %>%
+  ggplot(aes(scene_duration_mins)) +
+  geom_histogram()
+
+
+df_ambulance %>%
+  select(pu_id, SourceRecordID, TimeWayPoint, DateTimePoints) %>%
+  pivot_wider(names_from = TimeWayPoint, values_from = DateTimePoints) %>%
+  filter(!is.na(D_AT_DEST)) %>%
+  mutate(scene_duration_dept_to_dest = as.numeric(difftime(D_AT_DEST, D_DEPART_SCENE, units = "mins"))) %>%
+  ggplot(aes(scene_duration_dept_to_dest)) +
+  geom_histogram()
+
+df_ambulance %>%
+  filter(pu_id == 26994)
+
+get_dest_and_times(293)
+
+df %>% filter(pu_id == 8197)
+
+df_ambulance %>%
+  select(pu_id, SourceRecordID, TimeWayPoint, DateTimePoints) %>%
+  filter(TimeWayPoint %in% c("D_AT_DEST", "D_DEPART_SCENE")) %>% filter(pu_id == 8197)
+  # pivot_wider(names_from = TimeWayPoint, values_from = DateTimePoints)  %>% filter(pu_id == 8197)
+
+df_amb_time <-
+  df %>%
+  select(pu_id, SourceRecordID, TimeWayPoint, DateTimePoints) %>%
+  group_by(pu_id, SourceRecordID) %>%
+  filter(TimeWayPoint %in% c("D_AT_DEST", "D_DEPART_SCENE")) %>%
+  pivot_wider(names_from = TimeWayPoint, values_from = DateTimePoints) %>%
+  mutate(scene_duration_dept_to_dest = as.numeric(difftime(D_AT_DEST, D_DEPART_SCENE, units = "mins"))) 
+
+df_amb_time %>%
+  ggplot(aes(scene_duration_dept_to_dest)) +
+  geom_histogram()
+
+
+```
+
+```{r}
+library(sf)
+qld_boundary <- read_sf("input/qld_state_polygon_shp/QLD_STATE_POLYGON_shp.shp")
+qld_fill <- "darkolivegreen3"
+
+bad_coord_pu_ids <- c(1685722)  
+
+
+df %>%
+  filter(
+    !is.na(X_COORD),
+    TimeWayPoint == "D_RECEIVED",
+    !pu_id %in% bad_coord_pu_ids
+  ) %>%
+  left_join(select(df_amb_time, pu_id, SourceRecordID, scene_duration_dept_to_dest), by = c("pu_id", "SourceRecordID")) %>%
+  filter(!is.na(scene_duration_dept_to_dest)) %>%
+  ggplot() + 
+  geom_sf(data=qld_boundary, fill = qld_fill, col="transparent") +
+  geom_point(aes(X_COORD, Y_COORD, col = scene_duration_dept_to_dest)) +
+  # + geom_text(aes(x=X_COORD, y=Y_COORD, label = pu_id), hjust=1)
+  labs(x="", y="")
+
+df %>%
+  filter(pu_id == 1685722)
+```
+
