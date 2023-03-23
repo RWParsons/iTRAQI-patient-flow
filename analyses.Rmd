@@ -138,5 +138,33 @@ df %>%
 
 df %>%
   filter(pu_id == 1685722)
+
+
+df %>% plyr::count("TimeWayPoint") %>% arrange(desc(freq))
 ```
+
+D_RECEIVED: the time that ambulance got the call
+D_CLEAR: ambulance has been available for dispatched to other cases (no longer involved in that pu_id)
+ED_START_DATETIME_Formatted: patient handed over to ED
+
+
+check difference between 'Hosp_START_DATETIME_Formatted' and 'ED_START_DATETIME_Formatted'
+  - which comes first
+  - "arrive at hosp time" = coalesce(ED-start, hosp-start)
+
+we are attempting to replicate iTRAQI by trying to capture first call of ambulance to arrival at hospital (total time for patient retrieval)
+
+compare observed times (DEPART_SCENE to arrival - above) to estimated times using osrm/arcgis
+  - does this match up with our idea of the ideal facility?
+  - did they take longer than an hour and end up at a major trauma centre
+    -> if so, was there a closer, secondary centre?
+
+  
+
+
+
+
+
+
+
 
