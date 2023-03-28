@@ -111,8 +111,51 @@ df_amb_time %>%
   ggplot(aes(scene_duration_dept_to_dest)) +
   geom_histogram()
 
+```
+
+
+```{r}
+df %>%
+  select(pu_id, SourceRecordID, TimeWayPoint, DateTimePoints) %>%
+  group_by(pu_id) %>%
+  filter(TimeWayPoint %in% c("D_RECEIVED",
+                             "D_AT_DEST", 
+                             "D_AT_DEST_CAD", 
+                             "ED_START_DATETIME_Formatted", 
+                             "Hosp_START_DATETIME_Formatted")) %>%
+  pivot_wider(names_from = TimeWayPoint, values_from = DateTimePoints) %>%
+  mutate(start_time = D_RECEIVED,
+         end_time = coalesce(D_AT_DEST, D_AT_DEST_CAD, ED_START_DATETIME_Formatted, Hosp_START_DATETIME_Formatted),
+         journey_hours = as.numeric(difftime(end_time, start_time, units = "hours"))) %>%
+  select(pu_id, SourceRecordID, journey_hours) %>%
+  na.omit() %>%
+  ggplot(aes(journey_hours)) + geom_histogram()
+
+# need to calculate time between D_ON_SCENE to D_DEPART_SCENE and subtract this from journey-hours as this was not considered into iTRAQI
+
+df %>% plyr::count("TimeWayPoint") %>% arrange(desc(freq))
+
+
+df %>% 
+  filter(TimeWayPoint %in% c("D_RECEIVED",
+                             "D_COMPLETED")) %>%
+  group_by(pu_id, SourceRecordID) %>%
+  pivot_wider(names_from = TimeWayPoint, values_from = DateTimePoints) 
+```
+
+```{r}
+df
+
+df2 <- haven::read_spss(file.path(data_dir, "D_Table_HealthService_Time_UniqueLocation_Transport1stEnc_Summary.sav"))
+df2 <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav"))
 
 ```
+
+
+```{r}
+
+```
+
 
 ```{r}
 library(sf)
@@ -160,10 +203,13 @@ compare observed times (DEPART_SCENE to arrival - above) to estimated times usin
     -> if so, was there a closer, secondary centre?
 
   
+first pass:
+  > d_recieved to 'ed and first facility'
+  > d_recieved to 'ed at secondary facility (first tertiary care/major trauma care - PAH/RBWH/GC/TOWNSVILLE)'
+  > use 'D_Table_HealthService_Time_UniqueLocation_Transport1stEnc_Summary.sav' - `DateTimePoints_first`
 
 
-
-
+are those times within the range for iTRAQI for that SA1
 
 
 
