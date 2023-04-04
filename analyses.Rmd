@@ -90,7 +90,7 @@ df_ambulance %>%
 df_ambulance %>%
   filter(pu_id == 26994)
 
-get_dest_and_times(293)
+# get_dest_and_times(293)
 
 df %>% filter(pu_id == 8197)
 
@@ -147,7 +147,7 @@ df %>%
 df
 
 df2 <- haven::read_spss(file.path(data_dir, "D_Table_HealthService_Time_UniqueLocation_Transport1stEnc_Summary.sav"))
-df2 <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav"))
+# df2 <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav"))
 
 ```
 
@@ -212,5 +212,43 @@ first pass:
 are those times within the range for iTRAQI for that SA1
 
 
+```{r}
+tertiary_care_centres <- c(
+  "RBWH",
+  "PRINCESS ALEXANDRA",
+  "GOLD COAST",
+  "TOWNSVILLE"
+)
 
+
+df2 %>% 
+  mutate(tertiary_care = FACILITY_NAME_Clean %in% tertiary_care_centres) %>% 
+  group_by(pu_id) %>%
+  arrange(LocationChangeSequence) %>%
+  slice(if(any(tertiary_care == 1)) 1:which.max(tertiary_care==1) else row_number()) %>%
+  mutate(first_dest = row_number() == 2) %>%
+  filter(!(FACILITY_NAME_Clean == "AMBULANCE" & first_dest)) %>%
+  mutate(first_dest = row_number() == 2)
+```
+
+# questions for group
+```{r, eval=FALSE}
+
+# What does it mean when someone goes from ambulance to ambulance?
+  #> adam reckons a non-transport case or a private facility
+df2 %>% 
+  mutate(tertiary_care = FACILITY_NAME_Clean %in% tertiary_care_centres) %>% 
+  group_by(pu_id) %>%
+  arrange(LocationChangeSequence) %>%
+  slice(if(any(tertiary_care == 1)) 1:which.max(tertiary_care==1) else row_number()) %>%
+  mutate(first_dest = row_number() == 2) %>%
+  filter(first_dest & FACILITY_NAME_Clean == "AMBULANCE")
+
+df2 %>%
+  filter(pu_id == 294328)
+
+
+df %>% 
+  filter(pu_id == 294328)
+```
 
