@@ -129,7 +129,8 @@ df %>%
          journey_hours = as.numeric(difftime(end_time, start_time, units = "hours"))) %>%
   select(pu_id, SourceRecordID, journey_hours) %>%
   na.omit() %>%
-  ggplot(aes(journey_hours)) + geom_histogram()
+  ggplot(aes(journey_hours)) + 
+  geom_histogram()
 
 # need to calculate time between D_ON_SCENE to D_DEPART_SCENE and subtract this from journey-hours as this was not considered into iTRAQI
 
@@ -221,14 +222,31 @@ tertiary_care_centres <- c(
 )
 
 
-df2 %>% 
+df_times_to_care <-
+  df2 %>% 
   mutate(tertiary_care = FACILITY_NAME_Clean %in% tertiary_care_centres) %>% 
   group_by(pu_id) %>%
   arrange(LocationChangeSequence) %>%
   slice(if(any(tertiary_care == 1)) 1:which.max(tertiary_care==1) else row_number()) %>%
   mutate(first_dest = row_number() == 2) %>%
   filter(!(FACILITY_NAME_Clean == "AMBULANCE" & first_dest)) %>%
-  mutate(first_dest = row_number() == 2)
+  mutate(first_dest = row_number() == 2) %>%
+  ungroup()
+
+# time to tertiary care BY whether they went to a non-tertiary care centre first
+df_times_to_care %>%
+  group_by(pu_id) %>%
+  filter(max(tertiary_care)==1) %>%
+  summarize(
+    time_to_tertiary_care = as.numeric(difftime(max(DateTimePoints_first), min(DateTimePoints_first), units = "hours")),
+    n_locs = n()
+  ) %>% 
+  filter(n_locs %in% c(2,3)) %>%
+  ggplot(aes(x=time_to_tertiary_care)) +
+  geom_density() +
+  facet_wrap(~n_locs) +
+  scale_x_continuous(limits=c(0,5))
+  
 ```
 
 # questions for group
@@ -242,13 +260,38 @@ df2 %>%
   arrange(LocationChangeSequence) %>%
   slice(if(any(tertiary_care == 1)) 1:which.max(tertiary_care==1) else row_number()) %>%
   mutate(first_dest = row_number() == 2) %>%
-  filter(first_dest & FACILITY_NAME_Clean == "AMBULANCE")
+  filter(first_dest & FACILITY_NAME_Clean == "AMBULANCE") %>% pull(pu_id) %>% unique() %>% length()
 
-df2 %>%
-  filter(pu_id == 294328)
+df2 %>% filter(pu_id == 294328)
 
 
-df %>% 
-  filter(pu_id == 294328)
+df %>% filter(pu_id == 294328)
+
+
+# events where non-ambulance destination was first
+df_times_to_care %>%
+  group_by(pu_id) %>%
+  filter(!FACILITY_NAME_Clean == "AMBULANCE") %>%
+  slice(1) %>% 
+  filter(is.na(FirstAcuteDestinationFlag))
+
+# records where they seem to have not had an AMBULANCE journey in df_times_to_care
+df_times_to_care %>% filter(pu_id %in% c(528132, 2032182))
+
+# on larger record, it seems that there the first hospital visit could have been a separate event from the reason that they are in this dataset (ambulance and then another centre afterwards)
+df %>% filter(pu_id %in% c(528132, 2032182))
+
+
+
+# check for multiple-step-uppers before gettng to tertiary care centre
+df_times_to_care %>%
+    group_by(pu_id) %>%
+    filter(max(tertiary_care)==1) %>%
+    summarize(
+        time_to_tertiary_care = as.numeric(difftime(max(DateTimePoints_first), min(DateTimePoints_first), units = "hours")),
+        n_locs = n()
+    ) %>% filter(n_locs==4) %>% 
+  pull(pu_id) %>% 
+  {function(x) filter(df2, pu_id %in% x)}() %>% View()
 ```
 
