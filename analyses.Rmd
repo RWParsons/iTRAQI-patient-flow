@@ -10,6 +10,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(tidyverse)
+library(sp)
+library(sf)
+source("utils.R")
 ```
 
 ```{r}
@@ -246,7 +249,60 @@ df_times_to_care %>%
   geom_density() +
   facet_wrap(~n_locs) +
   scale_x_continuous(limits=c(0,5))
-  
+
+# map time to first acute care centre (not necessarily tertiary)
+df_acute_centre_times <-
+  df_times_to_care %>%
+  group_by(pu_id) %>%
+  slice(if(any(!is.na(FirstAcuteDestinationFlag))) 1:which.max(!is.na(FirstAcuteDestinationFlag)) else 0) %>% # keep up to first acute destination and remove those that don't have this flag included in any records
+  # summarize(max(!is.na(FirstAcuteDestinationFlag))) 
+  summarize(time_to_acute_care = as.numeric(difftime(max(DateTimePoints_first), min(DateTimePoints_first), units = "hours"))) %>%
+  left_join((df_times_to_care %>% group_by(pu_id) %>% slice(1) %>% select(pu_id, x=X_COORD_first, y=Y_COORD_first)), by = "pu_id") %>%
+  filter(pu_id != 1685722, time_to_acute_care < 5, !is.na(x), !is.na(y)) # coordinate is maybe in antarctica?
+
+# vis of time-to-acute-care points in qld
+df_acute_centre_times %>%
+  ggplot() + 
+  geom_sf(data=qld_boundary, fill = qld_fill, col="transparent") +
+  geom_point(aes(x, y, col = time_to_acute_care)) +
+  labs(x="", y="") +
+  theme_bw()
+
+
+itraqi_layer <- 
+  readRDS_github("https://raw.githubusercontent.com/RWParsons/iTRAQI_app/main/input/layers/stacked_SA1_and_SA2_polygons_year2016_simplified.rds") %>%
+  filter(SA_level == 1) %>%
+  mutate(
+    acute_range = str_extract(popup_acute, "\\[[0-9].*[0-9]\\]"),
+    acute_range_min = str_extract_all(acute_range, '(?<=\\[)[0-9]+'),
+    acute_range_max = str_extract(acute_range, '[0-9]+(?=\\])')
+  ) %>%
+  select(-acute_range) %>%
+  mutate(across(starts_with("acute_range"), as.numeric))
+
+
+coordinates(df_acute_centre_times) <- ~ x + y
+df_acute_centre_times <- st_as_sf(df_acute_centre_times)
+df_acute_centre_times <- st_set_crs(df_acute_centre_times, 4283)
+
+itraqi_sa1s <- st_join(itraqi_layer, df_acute_centre_times)%>% 
+  filter(!is.na(pu_id)) %>%
+  select(pu_id, acute_time_est = value_acute, acute_range_min, acute_range_max, time_to_acute_care) %>%
+  mutate(
+    time_to_acute_care_mins = time_to_acute_care * 60,
+    in_range = time_to_acute_care_mins >= acute_range_min & time_to_acute_care_mins <= acute_range_max
+  )
+itraqi_sa1s %>% plyr::count("in_range")
+
+itraqi_sa1s %>%
+  mutate(mins_difference = acute_time_est - time_to_acute_care_mins) %>%
+  ggplot(aes(mins_difference)) + 
+  geom_histogram() +
+  geom_vline(xintercept = 0) +
+  labs(caption = "acute_time_est - time_to_acute_care_mins",
+       title = "mins_difference > 0 means itraqi estimate was greater than observed travel time") +
+  scale_x_continuous(breaks = seq(-240, 300, by = 60))
+
 ```
 
 # questions for group
