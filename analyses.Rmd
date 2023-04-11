@@ -20,14 +20,12 @@ data_dir <- "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"
 ```
 
 ```{r}
+df_facilities <- haven::read_spss(file.path(data_dir, "D_Table_FacilityDescription.sav")) 
 df_facility_coords <- 
   haven::read_spss(file.path(data_dir, "D_Table_FacilityDescription.sav")) %>%
   select(facility = FACILITY_NAME_Clean, facility_latitude = Latitude, facility_longitude = Longitude)
 
 list.files(data_dir)
-
-
-
 
 
 df <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFile.sav")) %>% filter(SELECT==1)
@@ -217,12 +215,10 @@ are those times within the range for iTRAQI for that SA1
 
 
 ```{r}
-tertiary_care_centres <- c(
-  "RBWH",
-  "PRINCESS ALEXANDRA",
-  "GOLD COAST",
-  "TOWNSVILLE"
-)
+tertiary_care_centres <- 
+  df_facilities %>%
+  filter(NeuroSurgMajor == 1) %>%
+  pull(FACILITY_NAME_Clean)
 
 
 df_times_to_care <-
