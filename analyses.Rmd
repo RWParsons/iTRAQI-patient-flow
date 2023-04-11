@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(sp)
 library(sf)
-source("utils.R")
+source("R/download-utils.R")
 ```
 
 ```{r}

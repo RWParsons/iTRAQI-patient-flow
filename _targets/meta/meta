@@ -1,0 +1,6 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+data|stem|11c7e15f5d333d04|1d8f1151c1654c68|1c4b297885483c34|1588979285||t19458.1441190331s|a58bd5168d441539|296637|rds|local|vector|||0.71||
+files|stem|e661f98c220d568e|ba1d834751ffa371|1d8b1e45da8cc493|-86421757|U:\Research\Projects\health\jti_research_data\jti_itraqi/D_Table_FacilityDescription.sav*U:\Research\Projects\health\jti_research_data\jti_itraqi/D_Table_HealthService_Time_UniqueLocation_Transport1stEnc_Summary.sav*U:\Research\Projects\health\jti_research_data\jti_itraqi/D_Table_TimeAndLocation_LongFileSELECT.sav|t19454.2505066643s|39b6ec6fd8181c26|2153647|file|local|vector|||1.46||
+get_files|function|a0843af48e7896e8|||||||||||||||
+load_data|function|337d4123dbc295a2|||||||||||||||
+readRDS_github|function|072460cbc3d0b564|||||||||||||||
