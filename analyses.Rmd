@@ -368,4 +368,31 @@ df_times_to_care %>%
   pull(pu_id) %>% 
   {function(x) filter(df2, pu_id %in% x)}() %>% View()
 ```
+# CHATS WITH ADAM
 
+
+variable coalescing
+	> D_AT_DEST = Coalesce(D_AT_DEST, D_AT_DEST_CAD, D_TRIAGE, D_OFF_STRETCHER, ED_START_TIME)
+	> D_DEPART_SCENE = COALESCE(D_DEPART_SCENE, D_NOTIFY, D_LOADED)
+	
+	> for all, if there are two records of same TimeWayPoint across different SourceRecordID's, keep the earliest time
+
+
+times that we need
+	> PRE_HOSP_TIME = RESPONSE_TIME + TRAVEL_TIME
+		> RESPONSE_TIME = D_RECEIVED to D_ON_SCENE
+		> SCENE_TIME = D_ON_SCENE to D_DEPART_SCENE
+		> TRAVEL_TIME = D_DEPART_SCENE to D_AT_DEST
+	
+	> ___
+		> FIRST_FACILITY_TIME = ED_START_DATETIME_Formatted - ED_End_DATETIME_Formatted
+	
+	
+	> time at initial facility before step up
+		> initial HOSP_START to HOSP_END that is followed by HOSP_START at a higher level facility
+		> we want to know whether it was a true step up (if they spend a month at first facility then the step up was not likely due to acute care of the TBI)
+		
+	> final centre is the highest level of centre that they recieve care at (rehab centre that follows is not included in acute time)
+
+
+	
