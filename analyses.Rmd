@@ -421,6 +421,30 @@ df_deduped <-
   do.call("rbind", .) %>%
   filter(rep_row != 1)
 
+df_deduped %>%
+  # select(-c(SourceRecord, rep_row)) %>%
+  filter(pu_id == 2498) # find that there is a duplication on D_DISPATCH but the time is not adjacent to the first so it's not removed!
+  pivot_wider(names_from=TimeWayPoint, values_from = DateTimePoints)
+  # mutate(
+  #   D_AT_DEST = Coalesce(D_AT_DEST, D_AT_DEST_CAD, D_TRIAGE, D_OFF_STRETCHER, ED_START_TIME),
+  #   D_DEPART_SCENE = COALESCE(D_DEPART_SCENE, D_NOTIFY, D_LOADED)
+  # )
+df %>%
+  select(pu_id, SourceRecord, TimeWayPoint, DateTimePoints) %>%
+  filter(TimeWayPoint %in% c("D_RECEIVED", "ED_START_DATETIME_Formatted")) %>%
+  group_by(pu_id) %>%
+  arrange(DateTimePoints) %>%
+  mutate(txt = paste0(TimeWayPoint, collapse="")) %>%
+  filter(str_detect(txt, "D_RECEIVEDED_START_DATETIME_FormattedD_RECEIVED"))
 
+df %>% 
+  select(pu_id, SourceRecord, TimeWayPoint, DateTimePoints) %>%
+  filter(pu_id == 2498) %>%
+  arrange(DateTimePoints)
+
+
+df %>%
+  select(pu_id, SourceRecord, TimeWayPoint, DateTimePoints) %>%
+  filter(pu_id == 1247302) %>% View()
 ```
 
