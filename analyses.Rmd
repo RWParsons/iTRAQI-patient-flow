@@ -395,4 +395,32 @@ times that we need
 	> final centre is the highest level of centre that they recieve care at (rehab centre that follows is not included in acute time)
 
 
-	
+```{r}
+# remove duplicate TimeWayPoint's (potentially from repetition across SourceRecord's)
+df_deduped <- 
+  df %>%
+  # filter(pu_id %in% c(293, 264086)) %>%
+  select(pu_id, SourceRecord, TimeWayPoint, DateTimePoints) %>%
+  group_by(pu_id) %>%
+  arrange(DateTimePoints) %>%
+  split(.$pu_id) %>%
+  lapply(
+    ., 
+    function(data) {
+      data$rep_row <- 0
+      for(r in seq_len(nrow(data)-1)) {
+        twp <- data$TimeWayPoint[r]
+        next_twp <- data$TimeWayPoint[r+1]
+        if(twp == next_twp) {
+          data$rep_row[r+1] <- 1
+        }
+      }
+      return(data)
+    }
+  ) %>%
+  do.call("rbind", .) %>%
+  filter(rep_row != 1)
+
+
+```
+
