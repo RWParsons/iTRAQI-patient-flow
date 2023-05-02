@@ -4,7 +4,7 @@ library(tidyverse)
 
 data_dir <- "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"
 minimum_cscf_for_ct_flag <- 4
-cscf_service_for_flag <- "Alcohol & Other Drugs_Emergency"
+cscf_service_for_flag <- "Medical Imaging"
 
 
 df_facilities <- haven::read_spss(file.path(data_dir, "D_Table_FacilityDescription.sav")) 
@@ -88,18 +88,18 @@ df_cscf_long <-
   ) |> 
   select(-cscf_name_new)
 
-df_emerg_cscf <-
+df_img_cscf <-
   df_cscf_long |> 
   filter(cscf_service == cscf_service_for_flag) |> 
   select(-cscf_service) |> 
-  rename("emergency_cscf" = value) |> 
+  rename("imaging_cscf" = value) |> 
   mutate(
-    emergency_cscf = ifelse(as.numeric(emergency_cscf) >= minimum_cscf_for_ct_flag, 1, 0),
-    emergency_cscf = replace_na(emergency_cscf, 0),
+    imaging_cscf = ifelse(as.numeric(imaging_cscf) >= minimum_cscf_for_ct_flag, 1, 0),
+    imaging_cscf = replace_na(imaging_cscf, 0),
     name = toupper(name)
   ) |> 
   group_by(name) |> 
-  arrange(desc(emergency_cscf)) |> 
+  arrange(desc(imaging_cscf)) |> 
   slice(1) |> 
   ungroup()
 
@@ -107,4 +107,4 @@ df_facilities |> filter(!tolower(FACILITY_NAME_Clean) %in% tolower(df_cscf_long$
 
 df_facilities_with_flag <- 
   df_facilities |> 
-  left_join(df_emerg_cscf, by = c("FACILITY_NAME_Clean" = "name"))
+  left_join(df_img_cscf, by = c("FACILITY_NAME_Clean" = "name"))
