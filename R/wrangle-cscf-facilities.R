@@ -88,6 +88,14 @@ df_cscf_long <-
   ) |> 
   select(-cscf_name_new)
 
+
+# use all the same details for RCH as for QCH 
+df_cscf_long <- rbind(
+  df_cscf_long,
+  mutate(filter(df_cscf_long, name == "qch"), name = "rch")
+)
+
+
 df_img_cscf <-
   df_cscf_long |> 
   filter(cscf_service == cscf_service_for_flag) |> 
@@ -101,9 +109,15 @@ df_img_cscf <-
   group_by(name) |> 
   arrange(desc(imaging_cscf)) |> 
   slice(1) |> 
-  ungroup()
+  ungroup() |> 
+  # add missing details for other centres
+  rbind(data.frame(
+    name = c("MATER", "MAREEBA", "MOSSMAN", "TULLY", "YARRABAH"), 
+    imaging_cscf = c(1, 1, 1, 0, 0)
+  ))
 
-df_facilities |> filter(!tolower(FACILITY_NAME_Clean) %in% tolower(df_cscf_long$name)) # check which ones don't have a match
+
+df_facilities |> filter(!tolower(FACILITY_NAME_Clean) %in% tolower(df_img_cscf$name)) # check which ones don't have a match
 
 df_facilities_with_flag <- 
   df_facilities |> 
