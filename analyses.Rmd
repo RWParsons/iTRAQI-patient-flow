@@ -29,41 +29,7 @@ list.files(data_dir)
 
 
 df <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFile.sav")) %>% filter(SELECT==1)
-
-
-
 df2 <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFileSELECT.sav"))
-
-
-identical(
-  df %>% filter(SELECT==1) %>% select(-SELECT),
-  df2
-)
-
-df %>% filter(SELECT==1)
-
-get_dest_and_times <- function(id) {
-  df_short <- df %>%
-    filter(pu_id == id) %>%
-    select(Sequence, TimeWayPoint, DateTimePoints, X_COORD, Y_COORD, FacilityFixed) %>%
-    left_join(df_facility_coords, by = c("FacilityFixed" = "facility")) %>%
-    mutate(
-      x = coalesce(X_COORD, facility_longitude),
-      y = coalesce(Y_COORD, facility_latitude)
-    ) %>%
-    select(-c(X_COORD, facility_longitude, Y_COORD, facility_latitude))
-  
-  df_short %>%
-    slice(if(any(TimeWayPoint == "D_DEPART_SCENE")) 1:which.max(TimeWayPoint == "D_DEPART_SCENE") else row_number())
-  
-  
-  
-  df_short %>% 
-    filter(!is.na(x)) 
-  
-  browser()
-}
-
 
 df_ambulance <-
   df %>%
@@ -87,18 +53,6 @@ df_ambulance %>%
   mutate(scene_duration_dept_to_dest = as.numeric(difftime(D_AT_DEST, D_DEPART_SCENE, units = "mins"))) %>%
   ggplot(aes(scene_duration_dept_to_dest)) +
   geom_histogram()
-
-df_ambulance %>%
-  filter(pu_id == 26994)
-
-# get_dest_and_times(293)
-
-df %>% filter(pu_id == 8197)
-
-df_ambulance %>%
-  select(pu_id, SourceRecordID, TimeWayPoint, DateTimePoints) %>%
-  filter(TimeWayPoint %in% c("D_AT_DEST", "D_DEPART_SCENE")) %>% filter(pu_id == 8197)
-  # pivot_wider(names_from = TimeWayPoint, values_from = DateTimePoints)  %>% filter(pu_id == 8197)
 
 df_amb_time <-
   df %>%
@@ -155,17 +109,11 @@ df2 <- haven::read_spss(file.path(data_dir, "D_Table_HealthService_Time_UniqueLo
 
 
 ```{r}
-
-```
-
-
-```{r}
 library(sf)
 qld_boundary <- read_sf("input/qld_state_polygon_shp/QLD_STATE_POLYGON_shp.shp")
 qld_fill <- "darkolivegreen3"
 
 bad_coord_pu_ids <- c(1685722)  
-
 
 df %>%
   filter(
@@ -181,11 +129,6 @@ df %>%
   # + geom_text(aes(x=X_COORD, y=Y_COORD, label = pu_id), hjust=1)
   labs(x="", y="")
 
-df %>%
-  filter(pu_id == 1685722)
-
-
-df %>% plyr::count("TimeWayPoint") %>% arrange(desc(freq))
 ```
 
 D_RECEIVED: the time that ambulance got the call
@@ -299,14 +242,6 @@ itraqi_sa1s %>%
        title = "mins_difference > 0 means itraqi estimate was greater than observed travel time") +
   scale_x_continuous(breaks = seq(-240, 300, by = 60)) +
   theme_bw()
-
-itraqi_sa1s %>%
-  ggplot() + 
-  geom_sf(data=qld_boundary, fill = qld_fill, col="transparent") +
-  geom_point(aes(x, y, col = time_to_acute_care)) +
-  labs(x="", y="") +
-  theme_bw()
-
 
 # when mins_differnece is positive, iTRAQI over estimated travel time.
 # graph suggests that we overestimated travel time for rural retrievals but underestimated for metro
@@ -423,7 +358,7 @@ df_deduped <-
 
 df_deduped %>%
   # select(-c(SourceRecord, rep_row)) %>%
-  filter(pu_id == 2498) # find that there is a duplication on D_DISPATCH but the time is not adjacent to the first so it's not removed!
+  filter(pu_id == 2498) %>% # find that there is a duplication on D_DISPATCH but the time is not adjacent to the first so it's not removed!
   pivot_wider(names_from=TimeWayPoint, values_from = DateTimePoints)
   # mutate(
   #   D_AT_DEST = Coalesce(D_AT_DEST, D_AT_DEST_CAD, D_TRIAGE, D_OFF_STRETCHER, ED_START_TIME),
@@ -441,7 +376,6 @@ df %>%
   select(pu_id, SourceRecord, TimeWayPoint, DateTimePoints) %>%
   filter(pu_id == 2498) %>%
   arrange(DateTimePoints)
-
 
 df %>%
   select(pu_id, SourceRecord, TimeWayPoint, DateTimePoints) %>%
