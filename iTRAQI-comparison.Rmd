@@ -1,0 +1,77 @@
+---
+title: "iTRAQI comparison"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(sp)
+library(sf)
+source("R/download-utils.R")
+data_dir <- "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"
+```
+
+
+```{r}
+df_facilities <- haven::read_spss(file.path(data_dir, "D_Table_FacilityDescription.sav")) 
+df_times <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFileSELECT.sav"))
+df_itraqi_times <- openxlsx::read.xlsx("https://github.com/RWParsons/iTRAQI/blob/main/input/drive_times/Qld_towns_RSQ%20pathways%20V3.xlsx?raw=TRUE", startRow = 3) |> janitor::clean_names()
+
+df_itraqi_times <- openxlsx::read.xlsx("C:/Users/n10891277/R_projects/iTRAQI/input/drive_times/Qld_towns_RSQ pathways V3.xlsx", startRow = 3) |> janitor::clean_names()
+```
+
+
+df_facilities
+  centres to add
+  - mapoon phc
+  - coen phc
+  - PORMPURAAW PHC
+  - CHILLAGOE PRIMARY HEALTH CENTRE
+  - Croydon Primary Health Centre
+  - Georgetown Primary Health Centre
+  - Palm Island Hospital
+  - BOULIA PRIMARY HEALTH CENTRE
+  - Birdsville Primary Health Centre
+
+  
+
+```{r}
+df_itraqi_times |> plyr::count("destination1") |> arrange(desc(freq))
+
+
+df_itraqi_dests <-
+  df_itraqi_times |> 
+  select(town_point, destination1, destination2) |> 
+  pivot_longer(!town_point) |> 
+  mutate(str_trim(value))
+
+df_itraqi_dests |> 
+  mutate(value = str_trim(toupper(value))) |> 
+  select(value) |> 
+  distinct() |> 
+  rownames_to_column("n") |> 
+  filter(!is.na(value)) |> 
+  left_join(df_facilities, by = c("value" = "FACILITY_NAME_Clean")) |> 
+  filter(is.na(Facilitytype))
+
+df_itraqi_dests |> 
+  select(value) |> 
+  distinct() |> 
+  mutate(value = toupper(value)) |> 
+  rownames_to_column("n") |> 
+  filter(!is.na(value)) |> 
+  # filter(value %in% c("INGHAM", "BUNDABERG")) |> 
+  left_join(df_facilities, by = c("value" = "FACILITY_NAME_Clean")) 
+
+
+```
+
+
+```{r}
+
+```
+
