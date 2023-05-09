@@ -102,6 +102,29 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities) {
     filter(!is.na(Latitude), !is.na(Longitude)) |> 
     rename(xcoord = Longitude, ycoord = Latitude)
   
+  # df_paths <- map_dfr(iTRAQI_paths$town_point, function(tp) {
+  #   df_destinations <-
+  #     iTRAQI_paths |> 
+  #     filter(town_point == tp) |> 
+  #     select(town_point, destination1, destination2) |>
+  #     pivot_longer(!town_point, names_to = "destination_order", values_to = "destination") |> 
+  #     mutate(destination = toupper(destination)) |> 
+  #     left_join(
+  #       select(facilities, FACILITY_NAME_Clean, FCLTY_ID, xcoord, ycoord), 
+  #       by = c("destination" = "FACILITY_NAME_Clean")
+  #     )
+  #   
+  #   df_destinations_plus_origin <- bind_rows(
+  #     select(filter(iTRAQI_paths, town_point == tp), xcoord, ycoord),
+  #     df_destinations
+  #   ) |> 
+  #     mutate(id = paste0("P", tp))
+  #   
+  #   df_destinations_plus_origin
+  # })
+  
+  
+  
   ui <- 
     navbarPage(
       "iTRAQI",
@@ -153,8 +176,7 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities) {
           radius = 3, 
           fillOpacity = 0.2,
           color = "red"
-        ) 
-        
+        )
     })
     
     observeEvent(input$map_marker_click, {
@@ -166,13 +188,24 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities) {
         pivot_longer(!town_point, names_to = "destination_order", values_to = "destination") |> 
         mutate(destination = toupper(destination)) |> 
         left_join(
-          select(df_facilities, FACILITY_NAME_Clean, FCLTY_ID, xcoord = Longitude, ycoord = Latitude), 
+          select(facilities, FACILITY_NAME_Clean, FCLTY_ID, xcoord, ycoord), 
           by = c("destination" = "FACILITY_NAME_Clean")
         )
       
+      df_destinations_plus_origin <- bind_rows(
+        select(filter(iTRAQI_paths, town_point == input$map_marker_click$id), xcoord, ycoord),
+        df_destinations
+      )
+      
+      # df_paths_i <- df_paths |> filter(id == paste0("P", input$map_marker_click$id))
+      
       leafletProxy("map") |> 
         hideGroup(paste0("F", facilities$FCLTY_ID)) |> 
-        showGroup(paste0("F", df_destinations$FCLTY_ID))
+        showGroup(paste0("F", df_destinations$FCLTY_ID)) |> 
+        addPolylines(
+          lng = df_destinations_plus_origin$xcoord,
+          lat = df_destinations_plus_origin$ycoord
+        )
     })
     
   }
