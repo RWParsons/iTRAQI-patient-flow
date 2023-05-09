@@ -37,18 +37,44 @@ df_facilities
   - BOULIA PRIMARY HEALTH CENTRE
   - Birdsville Primary Health Centre
 
-  
+
+```{r}
+# add facilities and their coords for those referred to in the RSQ pathways (iTRAQI) but not in the df_facilities
+df_new_facilities_with_coords <- list(
+  # FACILITY_NAME_Clean; latitude; longitude
+  c("MAPOON PHC", -12.016632475931772, 141.9003317386928),
+  c("COEN PHC", -13.944773159917592, 143.20149205490424),
+  c("PORMPURAAW PHC", -14.899640079895562, 141.6221141698491),
+  c("CHILLAGOE PRIMARY HEALTH CENTRE", -17.14997184798341, 144.52796889646453),
+  c("CROYDON PRIMARY HEALTH CENTRE", -18.21097767957882, 142.2401596829941),
+  c("GEORGETOWN PRIMARY HEALTH CENTRE", -18.29203373558961, 143.54786222660186),
+  c("PALM ISLAND HOSPITAL", -18.730124669326756, 146.57884580498148),
+  c("BOULIA PRIMARY HEALTH CENTRE", -22.908133626306732, 139.90838848311506),
+  c("TEXAS HOSPITAL", -28.849736273857026, 151.17710790186513),
+  c("BIRDSVILLE PRIMARY HEALTH CENTRE", -25.897497103362916, 139.35551489854396)
+) %>%
+  do.call("rbind", .) |> 
+  data.frame() |> 
+  setNames(c("FACILITY_NAME_Clean", "Latitude", "Longitude")) |> 
+  mutate(across(!FACILITY_NAME_Clean, as.numeric))
+
+df_facilities <- 
+  df_facilities |> 
+  filter(!FACILITY_NAME_Clean %in% df_new_facilities_with_coords$FACILITY_NAME_Clean) |> 
+  bind_rows(df_new_facilities_with_coords)
+```
+
 
 ```{r}
 df_itraqi_times |> plyr::count("destination1") |> arrange(desc(freq))
-
 
 df_itraqi_dests <-
   df_itraqi_times |> 
   select(town_point, destination1, destination2) |> 
   pivot_longer(!town_point) |> 
-  mutate(str_trim(value))
+  mutate(value = str_trim(toupper(value)))
 
+# check that there are coordinates for all included facilities in iTRAQI paths
 df_itraqi_dests |> 
   mutate(value = str_trim(toupper(value))) |> 
   select(value) |> 
@@ -56,7 +82,7 @@ df_itraqi_dests |>
   rownames_to_column("n") |> 
   filter(!is.na(value)) |> 
   left_join(df_facilities, by = c("value" = "FACILITY_NAME_Clean")) |> 
-  filter(is.na(Facilitytype))
+  filter(is.na(Latitude))
 
 df_itraqi_dests |> 
   select(value) |> 
@@ -66,7 +92,6 @@ df_itraqi_dests |>
   filter(!is.na(value)) |> 
   # filter(value %in% c("INGHAM", "BUNDABERG")) |> 
   left_join(df_facilities, by = c("value" = "FACILITY_NAME_Clean")) 
-
 
 ```
 
