@@ -27,8 +27,8 @@ tar_source()
 # Replace the target list below with your own:
 list(
   tar_target(
-    files, 
-    get_files(data_dir = "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"), 
+    files,
+    get_files(data_dir = "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"),
     format = "file"
   ),
   tar_target(

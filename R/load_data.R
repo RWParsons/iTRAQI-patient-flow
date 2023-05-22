@@ -5,7 +5,6 @@ get_files <- function(data_dir) {
     "D_Table_HealthService_Time_UniqueLocation_Transport1stEnc_Summary.sav",
     "D_Table_TimeAndLocation_LongFileSELECT.sav"
   ))
-  
 }
 
 load_data <- function(data_files) {
@@ -15,10 +14,9 @@ load_data <- function(data_files) {
 }
 
 select_cohort <- function(data) {
-  pu_ids <- ...
-  
-  
-  filtered_data <- map(data) {
-    
-  }
+  data # placeholder
+
+  # filtered_data <- map(data) {
+  #
+  # }
 }
