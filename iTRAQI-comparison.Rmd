@@ -69,14 +69,14 @@ df_facilities <-
 ```{r}
 source("app/app.R")
 
-iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities)
+iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities) 
 ```
 
 
 ```{r}
 iTRAQI_paths |> 
   filter(town_point == input$map_marker_click$id) |>
-  select(town_point, destination1) 
+  select(town_point, destination1)
 ```
 
 
