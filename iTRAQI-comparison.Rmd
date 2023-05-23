@@ -19,11 +19,23 @@ data_dir <- "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"
 ```{r}
 df_facilities <- haven::read_spss(file.path(data_dir, "D_Table_FacilityDescription.sav")) 
 df_times <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFileSELECT.sav"))
-df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav")) |> 
-  select(pu_id, QASDeceasedEnc, EDDiedFlag, HospDiedFlag) # take earliest flag (order: QAS-ED-Hosp) and add label to popup if any=1
+
+
 df_itraqi_times <- openxlsx::read.xlsx("https://github.com/RWParsons/iTRAQI/blob/main/input/drive_times/Qld_towns_RSQ%20pathways%20V3.xlsx?raw=TRUE", startRow = 3) |> janitor::clean_names()
 
 df_itraqi_times <- openxlsx::read.xlsx("C:/Users/n10891277/R_projects/iTRAQI/input/drive_times/Qld_towns_RSQ pathways V3.xlsx", startRow = 3) |> janitor::clean_names()
+
+
+# get flags for death (and where along path) 
+df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav")) 
+
+
+
+df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav")) |> 
+  select(pu_id, QASDeceasedEnc, EDDiedFlag, HospDiedFlag) # take earliest flag (order: QAS-ED-Hosp) and add label to popup if any=1
+
+df_amb <- haven::read_spss(file.path(data_dir, "D_Table_AmbulanceContent.sav"))
+df_amb %>% plyr::count("PATIENT_OUTCOME_OBSERVED")
 ```
 
 
