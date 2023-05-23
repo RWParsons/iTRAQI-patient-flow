@@ -102,9 +102,9 @@ process_observed_paths <- function(observed_paths) {
 }
 
 process_observed_polyline_paths <- function(observed_paths) {
-  # if ("observed_polylines_df.rds" %in% list.files(fixtures_path)) {
-  #   return(readRDS(file.path(fixtures_path, "observed_polylines_df.rds")))
-  # }
+  if ("observed_polylines_df.rds" %in% list.files(fixtures_path)) {
+    return(readRDS(file.path(fixtures_path, "observed_polylines_df.rds")))
+  }
   palFac <- colorFactor("viridis", levels = 1:6, ordered = TRUE)
   observed_paths <- 
     observed_paths |> 

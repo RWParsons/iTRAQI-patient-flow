@@ -19,6 +19,8 @@ data_dir <- "U:\\Research\\Projects\\health\\jti_research_data\\jti_itraqi"
 ```{r}
 df_facilities <- haven::read_spss(file.path(data_dir, "D_Table_FacilityDescription.sav")) 
 df_times <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFileSELECT.sav"))
+df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav")) |> 
+  select(pu_id, QASDeceasedEnc, EDDiedFlag, HospDiedFlag) # take earliest flag (order: QAS-ED-Hosp) and add label to popup if any=1
 df_itraqi_times <- openxlsx::read.xlsx("https://github.com/RWParsons/iTRAQI/blob/main/input/drive_times/Qld_towns_RSQ%20pathways%20V3.xlsx?raw=TRUE", startRow = 3) |> janitor::clean_names()
 
 df_itraqi_times <- openxlsx::read.xlsx("C:/Users/n10891277/R_projects/iTRAQI/input/drive_times/Qld_towns_RSQ pathways V3.xlsx", startRow = 3) |> janitor::clean_names()
@@ -109,21 +111,9 @@ source("app/app.R"); iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities =
 ```{r}
 source("app/app.R")
 iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities, observed_paths = df_times_short) |> 
-  # arrange(town_name)
-  # filter(town_name == "Allingham")
-  filter(town_point == "TWP31090") |> 
-  # filter(str_trim(destination) == "INGHAM") |> 
-  left_join(df_facilities, by = c("destination" = "FACILITY_NAME_Clean"))
+  filter(town_point == "TWP31090")
 
-
-mutate(df_facilities, FACILITY_NAME_Clean = str_trim(FACILITY_NAME_Clean)) |> 
-  filter(FACILITY_NAME_Clean == "INGHAM")
-
-df_facilities |> filter(FACILITY_NAME_Clean == "INGHAM")
-
-
-df_facilities
-# "TWP31090"
+df_times |> filter(pu_id == 2195457)
 ```
 
 
