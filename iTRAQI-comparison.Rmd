@@ -38,7 +38,7 @@ fx_shorten_path <- function(pu_id_) {
     d |> 
     filter(!is.na(X_COORD)) |> 
     slice(1) |> 
-    mutate(NeuroSurgMajor = NA_integer_)
+    mutate(NeuroSurgMajor = NA_integer_, FCLTY_ID = NA_integer_)
   
   centre_rows <-
     d |> 
@@ -48,19 +48,19 @@ fx_shorten_path <- function(pu_id_) {
     slice(1) |> 
     ungroup()
   
-  if(nrow(centre_rows) == 0) return(select(origin_row, pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor))
+  if(nrow(centre_rows) == 0) return(select(origin_row, pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor, FCLTY_ID, Arrival_ReferralPathway))
   
   # print(pu_id_)
   centre_rows <- centre_rows |> 
     select(-NeuroSurgMajor) |>
     mutate(FACILITY_NAME_Clean = as.character(FACILITY_NAME_Clean)) |> 
-    left_join(select(df_facilities, FACILITY_NAME_Clean, Latitude, Longitude, NeuroSurgMajor), by = "FACILITY_NAME_Clean") |> 
+    left_join(select(df_facilities, FACILITY_NAME_Clean, Latitude, Longitude, NeuroSurgMajor, FCLTY_ID), by = "FACILITY_NAME_Clean") |> 
     mutate(X_COORD = Longitude, Y_COORD = Latitude) |> 
     select(-Latitude, -Longitude) |> 
     slice(1:which.min(NeuroSurgMajor))
   
   bind_rows(origin_row, centre_rows) |> 
-    select(pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor)
+    select(pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor, FCLTY_ID, Arrival_ReferralPathway)
 }
 
 
@@ -102,13 +102,28 @@ df_facilities <-
 
 # visualise iTRAQI paths
 ```{r}
-source("app/app.R")
-
-iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities, observed_paths = df_times_short) 
+source("app/app.R"); iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities, observed_paths = df_times_short) 
 ```
 
 
 ```{r}
+source("app/app.R")
+iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities, observed_paths = df_times_short) |> 
+  # arrange(town_name)
+  # filter(town_name == "Allingham")
+  filter(town_point == "TWP31090") |> 
+  # filter(str_trim(destination) == "INGHAM") |> 
+  left_join(df_facilities, by = c("destination" = "FACILITY_NAME_Clean"))
+
+
+mutate(df_facilities, FACILITY_NAME_Clean = str_trim(FACILITY_NAME_Clean)) |> 
+  filter(FACILITY_NAME_Clean == "INGHAM")
+
+df_facilities |> filter(FACILITY_NAME_Clean == "INGHAM")
+
+
+df_facilities
+# "TWP31090"
 ```
 
 

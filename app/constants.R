@@ -67,6 +67,7 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
         pivot_longer(!town_point, names_to = "destination_order", values_to = "destination") |>
         mutate(destination = toupper(destination)) |>
         separate(destination, c("destination", "transport_mode"), "\\|") |>
+        mutate(destination = str_trim(destination)) |> 
         left_join(
           select(facilities, FACILITY_NAME_Clean, FCLTY_ID, xcoord, ycoord),
           by = c("destination" = "FACILITY_NAME_Clean")
@@ -79,12 +80,38 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
         })()
     }
   ) |>
-    (\(x) {
-      do.call("rbind", x)
-    })() |>
+    (\(x) {do.call("rbind", x)})() |>
     mutate(transport_col = palFac(as.numeric(as.factor(transport_mode))))
 
 
   saveRDS(polylines_df, file.path(fixtures_path, "polylines_df.rds"))
   polylines_df
+}
+
+process_observed_paths <- function(observed_paths) {
+  observed_paths |> 
+    rename(xcoord = X_COORD, ycoord = Y_COORD) |> 
+    mutate(Arrival_ReferralPathway = haven::as_factor(Arrival_ReferralPathway),
+           facility_and_mode = glue::glue("{FACILITY_NAME_Clean} ({Arrival_ReferralPathway})")) |> 
+    group_by(pu_id) |> 
+    mutate(popup = glue::glue(
+      "<b>pu_id</b>: {pu_id} <br><br>",
+      "<b>centres</b>: <br>{paste0(facility_and_mode[!is.na(FACILITY_NAME_Clean)], collapse = ',<br>')}"
+    )) |> 
+    ungroup()
+}
+
+process_observed_polyline_paths <- function(observed_paths) {
+  # if ("observed_polylines_df.rds" %in% list.files(fixtures_path)) {
+  #   return(readRDS(file.path(fixtures_path, "observed_polylines_df.rds")))
+  # }
+  palFac <- colorFactor("viridis", levels = 1:6, ordered = TRUE)
+  observed_paths <- 
+    observed_paths |> 
+    rename(transport_mode = Arrival_ReferralPathway) |> 
+    select(pu_id, xcoord, ycoord, transport_mode, FACILITY_NAME_Clean, FCLTY_ID) |> 
+    mutate(transport_col = palFac(as.numeric(transport_mode)))
+  
+  saveRDS(observed_paths, file.path(fixtures_path, "observed_polylines_df.rds"))
+  observed_paths
 }
