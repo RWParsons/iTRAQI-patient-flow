@@ -25,17 +25,52 @@ df_itraqi_times <- openxlsx::read.xlsx("C:/Users/n10891277/R_projects/iTRAQI/inp
 ```
 
 
-df_facilities
-  centres to add
-  - mapoon phc
-  - coen phc
-  - PORMPURAAW PHC
-  - CHILLAGOE PRIMARY HEALTH CENTRE
-  - Croydon Primary Health Centre
-  - Georgetown Primary Health Centre
-  - Palm Island Hospital
-  - BOULIA PRIMARY HEALTH CENTRE
-  - Birdsville Primary Health Centre
+### rearrange observed data (`df_times`) into the same/similar format to df_itraqi_times, so that it can be used in the app
+
+```{r}
+fx_shorten_path <- function(pu_id_) {
+  d <- 
+    df_times |> 
+    filter(pu_id == pu_id_) |> 
+    mutate(FACILITY_NAME_Clean = ifelse(FACILITY_NAME_Clean == "", NA, FACILITY_NAME_Clean))
+  
+  origin_row <- 
+    d |> 
+    filter(!is.na(X_COORD)) |> 
+    slice(1) |> 
+    mutate(NeuroSurgMajor = NA_integer_)
+  
+  centre_rows <-
+    d |> 
+    filter(!is.na(FACILITY_NAME_Clean)) |> 
+    group_by(FACILITY_NAME_Clean) |> 
+    arrange(DateTimePoints) |> 
+    slice(1) |> 
+    ungroup()
+  
+  if(nrow(centre_rows) == 0) return(select(origin_row, pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor))
+  
+  # print(pu_id_)
+  centre_rows <- centre_rows |> 
+    select(-NeuroSurgMajor) |>
+    mutate(FACILITY_NAME_Clean = as.character(FACILITY_NAME_Clean)) |> 
+    left_join(select(df_facilities, FACILITY_NAME_Clean, Latitude, Longitude, NeuroSurgMajor), by = "FACILITY_NAME_Clean") |> 
+    mutate(X_COORD = Longitude, Y_COORD = Latitude) |> 
+    select(-Latitude, -Longitude) |> 
+    slice(1:which.min(NeuroSurgMajor))
+  
+  bind_rows(origin_row, centre_rows) |> 
+    select(pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor)
+}
+
+
+df_times_short <- lapply(
+  unique(df_times$pu_id),
+  fx_shorten_path
+) |>
+  (\(x) do.call("rbind", x))()
+```
+
 
 
 ```{r}
@@ -69,14 +104,11 @@ df_facilities <-
 ```{r}
 source("app/app.R")
 
-iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities) 
+iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities, observed_paths = df_times_short) 
 ```
 
 
 ```{r}
-iTRAQI_paths |> 
-  filter(town_point == input$map_marker_click$id) |>
-  select(town_point, destination1)
 ```
 
 
