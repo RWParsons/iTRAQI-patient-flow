@@ -71,9 +71,52 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
   polylines_df
 }
 
-process_observed_paths <- function(observed_paths) {
-  observed_paths |>
-    rename(xcoord = X_COORD, ycoord = Y_COORD) |>
+process_observed_paths <- function(observed_paths, iTRAQI_paths) {
+  iTRAQI_points <- 
+    iTRAQI_paths[,c("xcoord", "ycoord")] |> 
+    split(1:nrow(iTRAQI_paths)) |> 
+    map(\(x){
+      unlist(x) |> 
+        st_point()
+    }) |> 
+    st_sfc()
+  
+  f_closest_tp <- function(x, y) {
+    sf::st_distance(st_point(c(x[1],y[1])), iTRAQI_points) |> 
+      t() |> 
+      as.data.frame.matrix() |> 
+      cbind(iTRAQI_paths$town_point) |>
+      rename(distance = 1, town_point = 2) |> 
+      na.omit() |> 
+      arrange(distance) |> 
+      slice(1) |> 
+      select(closest_tp = town_point)
+  }
+
+  
+  observed_paths_clean <-
+    observed_paths|>
+    rename(xcoord = X_COORD, ycoord = Y_COORD) |> 
+    filter(!is.na(xcoord), !is.na(ycoord)) 
+  
+  df_closest_tp <-
+    observed_paths_clean |>
+    split(observed_paths_clean$pu_id) |>
+    map(\(x) {
+      x |>
+        slice(1) |>
+        (\(x) cbind(pu_id = x$pu_id, f_closest_tp(x$xcoord, x$ycoord)))()
+    }) |> 
+    (\(x)do.call("rbind", x))() |> 
+    remove_rownames() |> 
+    left_join(
+      na.omit(select(iTRAQI_paths, town_point, closest_town_name = town_name)),
+      by = c("closest_tp" = "town_point")
+    )
+  
+  observed_paths_clean |> 
+    left_join(df_closest_tp, by = "pu_id") |> 
+    ungroup() |>
     mutate(
       Arrival_ReferralPathway = haven::as_factor(Arrival_ReferralPathway),
       facility_and_mode = glue::glue("{FACILITY_NAME_Clean} ({Arrival_ReferralPathway})")
@@ -81,6 +124,7 @@ process_observed_paths <- function(observed_paths) {
     group_by(pu_id) |>
     mutate(popup = glue::glue(
       "<b>pu_id</b>: {pu_id} <br><br>",
+      "<b>closest iTRAQI point</b>: {closest_town_name} <br><br>",
       "<b>centres</b>: <br>{paste0(facility_and_mode[!is.na(FACILITY_NAME_Clean)], collapse = ',<br>')}"
     )) |>
     ungroup()
