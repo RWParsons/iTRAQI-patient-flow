@@ -71,7 +71,7 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
   polylines_df
 }
 
-process_observed_paths <- function(observed_paths, iTRAQI_paths) {
+process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths) {
   if ("observed_paths.rds" %in% list.files(fixtures_path)) {
     return(readRDS(file.path(fixtures_path, "observed_paths.rds")))
   }
@@ -117,10 +117,60 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths) {
       by = c("closest_tp" = "town_point")
     )
   
-  observed_paths_processed <-
+  observed_paths_clean <-
     observed_paths_clean |> 
     left_join(df_closest_tp, by = "pu_id") |> 
-    ungroup() |>
+    ungroup()
+  
+  categorise_path <- function(df_path) {
+    # categories
+    #     - DIDN'T MAKE IT TO HIGH LEVEL CARE
+    #     - DID MAKE IT TO HIGH LEVEL CARE & FOLLOWED ITRAQI PATH
+    #     - DID MAKE IT TO HIGH LEVEL CARE & DID NOT FOLLOW ITRAQI PATH
+    highest_level <- max(as.numeric(as.character(df_path$NeuroSurgMajor)), na.rm=TRUE)
+    
+    if(is.na(highest_level)|highest_level != 1) {
+      return("NO HLC")
+    }
+    
+    twp <- df_path$closest_tp[1]
+    
+    iTRAQI_path_facilities <- 
+      polyline_paths |> 
+      filter(town_point == twp) |> 
+      mutate(destination = ifelse(destination == "NA", NA, destination)) |> 
+      pull(destination) |> 
+      unique() |> 
+      na.omit()
+    
+    observed_path_facilities <-
+      df_path |> 
+      mutate(FACILITY_NAME_Clean = ifelse(FACILITY_NAME_Clean == "NA", NA, FACILITY_NAME_Clean)) |> 
+      pull(FACILITY_NAME_Clean) |> 
+      unique() |> 
+      na.omit()
+    
+    if(all(iTRAQI_path_facilities== observed_path_facilities)) {
+      return("FOLLOWED ITRAQI")
+    } else {
+      return("DID NOT FOLLOW ITRAQI")
+    }
+  }
+  
+  path_categories <- observed_paths_clean |> 
+    split(observed_paths_clean$pu_id) |> 
+    map(categorise_path) |> 
+    (\(x) do.call("c", x))() 
+  
+  df_path_categories <- data.frame(
+    pu_id = as.numeric(names(path_categories)),
+    path_category = unlist(path_categories)
+  ) |> 
+    remove_rownames()
+  
+  observed_paths_processed <-
+    observed_paths_clean |> 
+    left_join(df_path_categories) |> 
     mutate(
       Arrival_ReferralPathway = haven::as_factor(Arrival_ReferralPathway),
       facility_and_mode = glue::glue("{FACILITY_NAME_Clean} ({Arrival_ReferralPathway})")
@@ -128,7 +178,7 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths) {
     group_by(pu_id) |>
     mutate(popup = glue::glue(
       "<b>pu_id</b>: {pu_id} <br><br>",
-      "<b>closest iTRAQI point</b>: {closest_town_name} <br><br>",
+      "<b>closest iTRAQI point</b>: {closest_town_name} ({path_category})<br><br>",
       "<b>centres</b>: <br>{paste0(facility_and_mode[!is.na(FACILITY_NAME_Clean)], collapse = ',<br>')}"
     )) |>
     ungroup()

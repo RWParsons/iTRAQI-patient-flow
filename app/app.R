@@ -9,9 +9,9 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
   iTRAQI_paths <- process_iTRAQI_paths(iTRAQI_paths)
   facilities <- process_facilities(facilities)
   polyline_paths <- process_polyline_paths(iTRAQI_paths, facilities)
-  observed_paths <- process_observed_paths(observed_paths, iTRAQI_paths)
+  observed_paths <- process_observed_paths(observed_paths, iTRAQI_paths, polyline_paths)
   observed_polyline_paths <- process_observed_polyline_paths(observed_paths)
-  # return(polyline_paths)
+  # browser()
   ui <-
     navbarPage(
       "iTRAQI-patient-flow",
