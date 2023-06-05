@@ -3,7 +3,7 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
   source("app/constants.R")
   source("app/map-builders.R")
   source("app/base-map.R")
-  source("app/compare-paths.R")
+  source("app/marker-click.R")
 
 
   iTRAQI_paths <- process_iTRAQI_paths(iTRAQI_paths)
@@ -43,37 +43,19 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
     })
 
     observeEvent(input$map_marker_click, {
-      selected_marker <- input$map_marker_click$id
+      group_ids <- get_groups_marker_click(
+        marker_id = input$map_marker_click$id, 
+        polyline_paths = polyline_paths,
+        observed_polyline_paths = observed_polyline_paths,
+        observed_paths = observed_paths,
+        facilities = facilities,
+        iTRAQI_paths = iTRAQI_paths
+      )
 
-      if (class(selected_marker) == "character") {
-        # iTRAQI path
-        polyline_selected <-
-          polyline_paths |>
-          filter(town_point == selected_marker)
-      } else {
-        # Observed data path
-        polyline_selected <-
-          observed_polyline_paths |>
-          filter(pu_id == selected_marker)
-      }
-      
-      hide_fcltys <- facilities$FCLTY_ID[!facilities$FCLTY_ID %in% polyline_selected$FCLTY_ID]
-      hide_town_points <- iTRAQI_paths$town_point[iTRAQI_paths$town_point != selected_marker]
-      hide_observed_points <- observed_polyline_paths$pu_id[observed_polyline_paths$pu_id != selected_marker]
-      
-      if(!is_itraqi(selected_marker, iTRAQI_paths = iTRAQI_paths)) {
-        iTRAQI_marker <- locate_nearest_itraqi_point(x = input$map_marker_click$lng, y = input$map_marker_click$lat, iTRAQI_paths = iTRAQI_paths)
-      } else {
-        iTRAQI_marker <- NULL
-      }
-      
       leafletProxy("map") |>
-        hideGroup(paste0("F", hide_fcltys)) |>
-        showGroup(paste0("F", polyline_selected$FCLTY_ID)) |>
-        hideGroup(paste0("PL", hide_town_points)) |>
-        showGroup(paste0("PL", c(selected_marker, iTRAQI_marker))) |>
-        hideGroup(paste0("PL-obs", hide_observed_points)) |>
-        showGroup(paste0("PL-obs", selected_marker))
+        hideGroup(group_ids$hide_groups) |> 
+        showGroup(group_ids$show_groups)
+
     })
   }
   shinyApp(ui = ui, server = server)
