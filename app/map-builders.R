@@ -72,6 +72,10 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
 }
 
 process_observed_paths <- function(observed_paths, iTRAQI_paths) {
+  if ("observed_paths.rds" %in% list.files(fixtures_path)) {
+    return(readRDS(file.path(fixtures_path, "observed_paths.rds")))
+  }
+  
   iTRAQI_points <- 
     iTRAQI_paths[,c("xcoord", "ycoord")] |> 
     split(1:nrow(iTRAQI_paths)) |> 
@@ -93,7 +97,6 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths) {
       select(closest_tp = town_point)
   }
 
-  
   observed_paths_clean <-
     observed_paths|>
     rename(xcoord = X_COORD, ycoord = Y_COORD) |> 
@@ -114,7 +117,8 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths) {
       by = c("closest_tp" = "town_point")
     )
   
-  observed_paths_clean |> 
+  observed_paths_processed <-
+    observed_paths_clean |> 
     left_join(df_closest_tp, by = "pu_id") |> 
     ungroup() |>
     mutate(
@@ -128,6 +132,9 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths) {
       "<b>centres</b>: <br>{paste0(facility_and_mode[!is.na(FACILITY_NAME_Clean)], collapse = ',<br>')}"
     )) |>
     ungroup()
+  
+  saveRDS(observed_paths_processed, file.path(fixtures_path, "observed_paths.rds"))
+  observed_paths_processed
 }
 
 process_observed_polyline_paths <- function(observed_paths) {
