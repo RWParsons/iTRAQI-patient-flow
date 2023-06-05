@@ -43,7 +43,7 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       fillOpacity = 0.2,
       fillColor = "red",
       color = "red"
-    ) |> 
+    ) |>
     addCircleMarkers(
       layerId = observed_paths$pu_id,
       lng = observed_paths$xcoord,
@@ -76,32 +76,31 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
     }
     pb$tick()
   }
-  
+
   cat("\n\nAdding polylines for observed data\n\n")
   pb <- progress_bar$new(total = length(sample_pu_ids))
-  
+
   for (pu_id_ in sample_pu_ids) {
-      polyline_select <- observed_polyline_paths |>
-        filter(pu_id == pu_id_) |>
-        select(pu_id, xcoord, ycoord, transport_col) |>
-        na.omit()
-      # if(nrow(polyline_select) <= 1) next
-      
-      for (r in 1:(nrow(polyline_select) - 1)) {
-        
-        polyline_select_single_path <- polyline_select[c(r, r + 1), ]
-        map <- map |>
-          addPolylines(
-            group = paste0("PL-obs", pu_id_),
-            lng = polyline_select_single_path$xcoord,
-            lat = polyline_select_single_path$ycoord,
-            col = polyline_select_single_path$transport_col[2]
-          )
-      }
-      pb$tick()
+    polyline_select <- observed_polyline_paths |>
+      filter(pu_id == pu_id_) |>
+      select(pu_id, xcoord, ycoord, transport_col) |>
+      na.omit()
+    # if(nrow(polyline_select) <= 1) next
+
+    for (r in 1:(nrow(polyline_select) - 1)) {
+      polyline_select_single_path <- polyline_select[c(r, r + 1), ]
+      map <- map |>
+        addPolylines(
+          group = paste0("PL-obs", pu_id_),
+          lng = polyline_select_single_path$xcoord,
+          lat = polyline_select_single_path$ycoord,
+          col = polyline_select_single_path$transport_col[2]
+        )
+    }
+    pb$tick()
   }
-  
-  
+
+
   saveRDS(map, file.path(fixtures_path, "base-map.rds"))
   return(map)
 }

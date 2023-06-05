@@ -1,7 +1,10 @@
 iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
   source("app/packages.R")
   source("app/constants.R")
+  source("app/map-builders.R")
   source("app/base-map.R")
+  source("app/compare-paths.R")
+
 
   iTRAQI_paths <- process_iTRAQI_paths(iTRAQI_paths)
   facilities <- process_facilities(facilities)
@@ -34,17 +37,14 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
         facilities = facilities,
         iTRAQI_paths = iTRAQI_paths,
         polyline_paths = polyline_paths,
-        
         observed_paths = observed_paths,
         observed_polyline_paths = observed_polyline_paths
       )
     })
 
     observeEvent(input$map_marker_click, {
-      
-      
       selected_marker <- input$map_marker_click$id
-      
+
       if (class(selected_marker) == "character") {
         # iTRAQI path
         polyline_selected <-
@@ -65,7 +65,7 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
         hideGroup(paste0("F", hide_fcltys)) |>
         showGroup(paste0("F", polyline_selected$FCLTY_ID)) |>
         hideGroup(paste0("PL", hide_town_points)) |>
-        showGroup(paste0("PL", selected_marker)) |> 
+        showGroup(paste0("PL", selected_marker)) |>
         hideGroup(paste0("PL-obs", hide_observed_points)) |>
         showGroup(paste0("PL-obs", selected_marker))
     })

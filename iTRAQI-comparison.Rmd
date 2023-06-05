@@ -23,12 +23,8 @@ df_times <- haven::read_spss(file.path(data_dir, "D_Table_TimeAndLocation_LongFi
 
 df_itraqi_times <- openxlsx::read.xlsx("https://github.com/RWParsons/iTRAQI/blob/main/input/drive_times/Qld_towns_RSQ%20pathways%20V3.xlsx?raw=TRUE", startRow = 3) |> janitor::clean_names()
 
-df_itraqi_times <- openxlsx::read.xlsx("C:/Users/n10891277/R_projects/iTRAQI/input/drive_times/Qld_towns_RSQ pathways V3.xlsx", startRow = 3) |> janitor::clean_names()
-
-
 # get flags for death (and where along path) 
 df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav")) 
-
 
 
 df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesSELECT.sav")) |> 
