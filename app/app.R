@@ -56,16 +56,22 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
           observed_polyline_paths |>
           filter(pu_id == selected_marker)
       }
-      # browser()
+      
       hide_fcltys <- facilities$FCLTY_ID[!facilities$FCLTY_ID %in% polyline_selected$FCLTY_ID]
       hide_town_points <- iTRAQI_paths$town_point[iTRAQI_paths$town_point != selected_marker]
       hide_observed_points <- observed_polyline_paths$pu_id[observed_polyline_paths$pu_id != selected_marker]
-
+      
+      if(!is_itraqi(selected_marker, iTRAQI_paths = iTRAQI_paths)) {
+        iTRAQI_marker <- locate_nearest_itraqi_point(x = input$map_marker_click$lng, y = input$map_marker_click$lat, iTRAQI_paths = iTRAQI_paths)
+      } else {
+        iTRAQI_marker <- NULL
+      }
+      
       leafletProxy("map") |>
         hideGroup(paste0("F", hide_fcltys)) |>
         showGroup(paste0("F", polyline_selected$FCLTY_ID)) |>
         hideGroup(paste0("PL", hide_town_points)) |>
-        showGroup(paste0("PL", selected_marker)) |>
+        showGroup(paste0("PL", c(selected_marker, iTRAQI_marker))) |>
         hideGroup(paste0("PL-obs", hide_observed_points)) |>
         showGroup(paste0("PL-obs", selected_marker))
     })
