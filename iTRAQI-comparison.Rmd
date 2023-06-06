@@ -32,6 +32,9 @@ df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesS
 
 df_amb <- haven::read_spss(file.path(data_dir, "D_Table_AmbulanceContent.sav"))
 df_amb %>% plyr::count("PATIENT_OUTCOME_OBSERVED")
+
+
+df_ages <- haven::read_spss(file.path(data_dir, "D_Table_HospitalContent.sav"), col_select = c("pu_id", "PAT_AGE"))
 ```
 
 
@@ -122,6 +125,24 @@ iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities, obser
   filter(town_point == "TWP31090")
 
 df_times |> filter(pu_id == 2195457)
+
+df_times_short |> 
+  filter(FACILITY_NAME_Clean == "QCH") |>
+  select(pu_id) |> 
+  distinct() |> 
+  left_join(distinct(df_ages)) |> 
+  ggplot(aes(PAT_AGE)) +
+  geom_histogram()
+
+
+df_times_short |> 
+  select(pu_id) |> 
+  distinct() |> 
+  left_join(distinct(df_ages)) |> 
+  na.omit() |> 
+  pull(PAT_AGE) |> 
+  (\(x)cbind(Freq=table(x), Cumul=cumsum(table(x)), relative=prop.table(table(x))))() |> 
+  as.data.frame()
 ```
 
 
