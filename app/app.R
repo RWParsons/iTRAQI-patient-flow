@@ -4,6 +4,7 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
   source("app/map-builders.R")
   source("app/base-map.R")
   source("app/marker-click.R")
+  source("app/path-category-controls.R")
 
 
   iTRAQI_paths <- process_iTRAQI_paths(iTRAQI_paths)
@@ -26,6 +27,7 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
             tags$script(src = "script.js")
           ),
           leafletOutput("map", width = "100%", height = "100%"),
+          ui_panel
         )
       )
     )
@@ -55,8 +57,20 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
       leafletProxy("map") |>
         hideGroup(group_ids$hide_groups) |> 
         showGroup(group_ids$show_groups)
-
     })
+    
+    observeEvent(input$path_categories, {
+      group_ids <- get_groups_path_cats(
+        path_cats = input$path_categories,
+        observed_paths = observed_paths
+      )
+
+
+      leafletProxy("map") |>
+        hideGroup(group_ids$hide_groups) |>
+        showGroup(group_ids$show_groups)
+    })
+    
   }
   shinyApp(ui = ui, server = server)
 }

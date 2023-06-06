@@ -81,7 +81,7 @@ df_times_short <- lapply(
   unique(df_times$pu_id),
   fx_shorten_path
 ) |>
-  (\(x) do.call("rbind", x))()
+  (\(x) do.call("rbind", x))() |> mutate(pu_id = paste0("ID-", pu_id)) # make pu_id a character so that it works nicer as an ID for leaflet
 ```
 
 

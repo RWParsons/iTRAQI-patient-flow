@@ -4,12 +4,12 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
   if ("base-map.rds" %in% list.files(fixtures_path)) {
     return(readRDS(file.path(fixtures_path, "base-map.rds")))
   }
-
-  sample_town_points <- unique(iTRAQI_paths$town_point) # [1:50]
+  
+  sample_town_points <- unique(iTRAQI_paths$town_point) 
   sample_pu_ids <- unique(observed_paths$pu_id)
 
   iTRAQI_paths <- filter(iTRAQI_paths, town_point %in% sample_town_points)
-
+  
   map <- leaflet(options = leafletOptions(minZoom = 5)) |>
     setMaxBounds(
       lng1 = map_bounds$lng1, lat1 = map_bounds$lat1,
@@ -45,7 +45,8 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       color = "red"
     ) |>
     addCircleMarkers(
-      layerId = observed_paths$pu_id,
+      layerId = as.numeric(str_remove(observed_paths$pu_id, "ID-")),
+      group = as.character(observed_paths$pu_id),
       lng = observed_paths$xcoord,
       lat = observed_paths$ycoord,
       radius = 2,
@@ -54,7 +55,7 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       color = "orange",
       popup = observed_paths$popup
     )
-
+  # return(map)
   pb <- progress_bar$new(total = length(sample_town_points))
 
   cat("Adding polylines for iTRAQI paths\n\n")

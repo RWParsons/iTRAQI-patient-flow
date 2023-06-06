@@ -96,11 +96,11 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
       slice(1) |> 
       select(closest_tp = town_point)
   }
-
+  
   observed_paths_clean <-
     observed_paths|>
     rename(xcoord = X_COORD, ycoord = Y_COORD) |> 
-    filter(!is.na(xcoord), !is.na(ycoord)) 
+    filter(!is.na(xcoord), !is.na(ycoord))
   
   df_closest_tp <-
     observed_paths_clean |>
@@ -150,7 +150,13 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
       unique() |> 
       na.omit()
     
-    if(all(iTRAQI_path_facilities== observed_path_facilities)) {
+    brisbane_hospitals <- c("RBWH", "PAH", "QCH", "PRINCESS ALEXANDRA")
+    
+    iTRAQI_path_facilities[iTRAQI_path_facilities %in% brisbane_hospitals] <- "BRISBANE-MAJOR"
+    observed_path_facilities[observed_path_facilities %in% brisbane_hospitals] <- "BRISBANE-MAJOR"
+    
+    
+    if(all(iTRAQI_path_facilities == observed_path_facilities)) {
       return("FOLLOWED ITRAQI")
     } else {
       return("DID NOT FOLLOW ITRAQI")
@@ -161,9 +167,9 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     split(observed_paths_clean$pu_id) |> 
     map(categorise_path) |> 
     (\(x) do.call("c", x))() 
-  
+  # browser()
   df_path_categories <- data.frame(
-    pu_id = as.numeric(names(path_categories)),
+    pu_id = names(path_categories),
     path_category = unlist(path_categories)
   ) |> 
     remove_rownames()
