@@ -25,7 +25,8 @@ process_iTRAQI_paths <- function(iTRAQI_paths) {
 process_facilities <- function(facilities) {
   facilities |>
     filter(!is.na(Latitude), !is.na(Longitude)) |>
-    rename(xcoord = Longitude, ycoord = Latitude)
+    rename(xcoord = Longitude, ycoord = Latitude) |> 
+    mutate(grp_id = paste0("F", FCLTY_ID))
 }
 
 process_polyline_paths <- function(iTRAQI_paths, facilities) {
@@ -64,7 +65,10 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
     (\(x) {
       do.call("rbind", x)
     })() |>
-    mutate(transport_col = palFac(as.numeric(as.factor(transport_mode))))
+    mutate(
+      transport_col = palFac(as.numeric(as.factor(transport_mode))),
+      grp_id = paste0("PL-", town_point)
+    )
 
 
   saveRDS(polylines_df, file.path(fixtures_path, "polylines_df.rds"))
@@ -127,7 +131,11 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     #     - DIDN'T MAKE IT TO HIGH LEVEL CARE
     #     - DID MAKE IT TO HIGH LEVEL CARE & FOLLOWED ITRAQI PATH
     #     - DID MAKE IT TO HIGH LEVEL CARE & DID NOT FOLLOW ITRAQI PATH
-    highest_level <- max(as.numeric(as.character(df_path$NeuroSurgMajor)), na.rm=TRUE)
+    if (all(is.na(df_path$NeuroSurgMajor))) {
+      highest_level <- NA
+    } else {
+      highest_level <- max(as.numeric(as.character(df_path$NeuroSurgMajor)), na.rm=TRUE)
+    }
     
     if(is.na(highest_level)|highest_level != 1) {
       return("NO HLC")

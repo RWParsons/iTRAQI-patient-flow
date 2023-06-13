@@ -19,13 +19,14 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
     addMapPane(name = "maplabels", zIndex = 400) |>
     addMapPane(name = "markers", zIndex = 206) |>
     addProviderTiles("CartoDB.VoyagerNoLabels") |>
-    addProviderTiles("CartoDB.VoyagerOnlyLabels",
+    addProviderTiles(
+      "CartoDB.VoyagerOnlyLabels",
       options = leafletOptions(pane = "maplabels"),
       group = "map labels"
     ) |>
-    hideGroup(paste0("F", facilities$FCLTY_ID)) |>
-    hideGroup(paste0("PL", polyline_paths$town_point)) |>
-    hideGroup(paste0("PL-obs", sample_pu_ids)) |>
+    hideGroup(facilities$grp_id) |>
+    hideGroup(polyline_paths$grp_id) |>
+    hideGroup(str_replace(sample_pu_ids, "ID-", "PL-obs")) |>
     addCircleMarkers(
       layerId = iTRAQI_paths$town_point,
       lng = iTRAQI_paths$xcoord,
@@ -36,7 +37,7 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       popup = iTRAQI_paths$popup
     ) |>
     addCircleMarkers(
-      group = paste0("F", facilities$FCLTY_ID),
+      group = facilities$grp_id,
       lng = facilities$xcoord,
       lat = facilities$ycoord,
       radius = 3,
@@ -46,7 +47,7 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
     ) |>
     addCircleMarkers(
       layerId = as.numeric(str_remove(observed_paths$pu_id, "ID-")),
-      group = as.character(observed_paths$pu_id),
+      group = observed_paths$pu_id,
       lng = observed_paths$xcoord,
       lat = observed_paths$ycoord,
       radius = 2,
@@ -62,14 +63,15 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
   for (tp in sample_town_points) {
     polyline_select <- polyline_paths |>
       filter(town_point == tp) |>
-      select(town_point, xcoord, ycoord, transport_col) |>
+      select(town_point, xcoord, ycoord, transport_col, grp_id) |>
       na.omit()
 
     for (r in 1:(nrow(polyline_select) - 1)) {
       polyline_select_single_path <- polyline_select[c(r, r + 1), ]
+      
       map <- map |>
         addPolylines(
-          group = paste0("PL", tp),
+          group = polyline_select_single_path$grp_id[1],
           lng = polyline_select_single_path$xcoord,
           lat = polyline_select_single_path$ycoord,
           col = polyline_select_single_path$transport_col[2]
@@ -92,7 +94,7 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       polyline_select_single_path <- polyline_select[c(r, r + 1), ]
       map <- map |>
         addPolylines(
-          group = paste0("PL-obs", pu_id_),
+          group = str_replace(pu_id_, "ID-", "PL-obs"),
           lng = polyline_select_single_path$xcoord,
           lat = polyline_select_single_path$ycoord,
           col = polyline_select_single_path$transport_col[2]

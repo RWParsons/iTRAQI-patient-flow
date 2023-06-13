@@ -59,18 +59,16 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
         showGroup(group_ids$show_groups)
     })
     
-    observeEvent(input$path_categories, {
+    observeEvent(input$path_categories, ignoreNULL = FALSE, {
       group_ids <- get_groups_path_cats(
         path_cats = input$path_categories,
         observed_paths = observed_paths
       )
-
-
+      
       leafletProxy("map") |>
         hideGroup(group_ids$hide_groups) |>
         showGroup(group_ids$show_groups)
     })
-    
   }
   shinyApp(ui = ui, server = server)
 }
