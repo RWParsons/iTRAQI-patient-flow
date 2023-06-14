@@ -19,19 +19,19 @@ get_groups_marker_click <- function(marker_id,
       filter(pu_id == paste0("ID-", marker_id))
     is_itraqi <- FALSE
   }
-  
+
   hide_fcltys <- facilities$FCLTY_ID[!facilities$FCLTY_ID %in% polyline_selected$FCLTY_ID]
   hide_town_points <- iTRAQI_paths$town_point[iTRAQI_paths$town_point != marker_id]
   hide_observed_points <- observed_polyline_paths$pu_id[observed_polyline_paths$pu_id != paste0("ID-", marker_id)]
-  
-  if(!is_itraqi) {
-    itraqi_tp <- observed_paths |> 
-      filter(pu_id == paste0("ID-", marker_id)) |> 
+
+  if (!is_itraqi) {
+    itraqi_tp <- observed_paths |>
+      filter(pu_id == paste0("ID-", marker_id)) |>
       pull(closest_tp)
-    
+
     marker_id <- c(marker_id, itraqi_tp)
   }
-  
+
   list(
     hide_groups = c(
       paste0("F", hide_fcltys),

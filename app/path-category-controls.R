@@ -18,7 +18,6 @@ ui_panel <-
 
 
 get_groups_path_cats <- function(path_cats, observed_paths) {
-  
   # browser()
   list(
     hide_groups = observed_paths$pu_id[!observed_paths$path_category %in% path_cats],

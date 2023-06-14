@@ -115,7 +115,7 @@ df_facilities <-
 
 # visualise iTRAQI paths
 ```{r}
-source("app/app.R"); iTRAQI_vis_app(iTRAQI_paths = df_itraqi_times, facilities = df_facilities, observed_paths = df_times_short) 
+source("app/app-modular.R")
 ```
 
 

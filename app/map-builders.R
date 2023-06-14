@@ -25,7 +25,7 @@ process_iTRAQI_paths <- function(iTRAQI_paths) {
 process_facilities <- function(facilities) {
   facilities |>
     filter(!is.na(Latitude), !is.na(Longitude)) |>
-    rename(xcoord = Longitude, ycoord = Latitude) |> 
+    rename(xcoord = Longitude, ycoord = Latitude) |>
     mutate(grp_id = paste0("F", FCLTY_ID))
 }
 
@@ -79,33 +79,33 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
   if ("observed_paths.rds" %in% list.files(fixtures_path)) {
     return(readRDS(file.path(fixtures_path, "observed_paths.rds")))
   }
-  
-  iTRAQI_points <- 
-    iTRAQI_paths[,c("xcoord", "ycoord")] |> 
-    split(1:nrow(iTRAQI_paths)) |> 
+
+  iTRAQI_points <-
+    iTRAQI_paths[, c("xcoord", "ycoord")] |>
+    split(1:nrow(iTRAQI_paths)) |>
     map(\(x){
-      unlist(x) |> 
+      unlist(x) |>
         st_point()
-    }) |> 
+    }) |>
     st_sfc()
-  
+
   f_closest_tp <- function(x, y) {
-    sf::st_distance(st_point(c(x[1],y[1])), iTRAQI_points) |> 
-      t() |> 
-      as.data.frame.matrix() |> 
+    sf::st_distance(st_point(c(x[1], y[1])), iTRAQI_points) |>
+      t() |>
+      as.data.frame.matrix() |>
       cbind(iTRAQI_paths$town_point) |>
-      rename(distance = 1, town_point = 2) |> 
-      na.omit() |> 
-      arrange(distance) |> 
-      slice(1) |> 
+      rename(distance = 1, town_point = 2) |>
+      na.omit() |>
+      arrange(distance) |>
+      slice(1) |>
       select(closest_tp = town_point)
   }
-  
+
   observed_paths_clean <-
-    observed_paths|>
-    rename(xcoord = X_COORD, ycoord = Y_COORD) |> 
+    observed_paths |>
+    rename(xcoord = X_COORD, ycoord = Y_COORD) |>
     filter(!is.na(xcoord), !is.na(ycoord))
-  
+
   df_closest_tp <-
     observed_paths_clean |>
     split(observed_paths_clean$pu_id) |>
@@ -113,19 +113,19 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
       x |>
         slice(1) |>
         (\(x) cbind(pu_id = x$pu_id, f_closest_tp(x$xcoord, x$ycoord)))()
-    }) |> 
-    (\(x)do.call("rbind", x))() |> 
-    remove_rownames() |> 
+    }) |>
+    (\(x)do.call("rbind", x))() |>
+    remove_rownames() |>
     left_join(
       na.omit(select(iTRAQI_paths, town_point, closest_town_name = town_name)),
       by = c("closest_tp" = "town_point")
     )
-  
+
   observed_paths_clean <-
-    observed_paths_clean |> 
-    left_join(df_closest_tp, by = "pu_id") |> 
+    observed_paths_clean |>
+    left_join(df_closest_tp, by = "pu_id") |>
     ungroup()
-  
+
   categorise_path <- function(df_path) {
     # categories
     #     - DIDN'T MAKE IT TO HIGH LEVEL CARE
@@ -134,57 +134,57 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     if (all(is.na(df_path$NeuroSurgMajor))) {
       highest_level <- NA
     } else {
-      highest_level <- max(as.numeric(as.character(df_path$NeuroSurgMajor)), na.rm=TRUE)
+      highest_level <- max(as.numeric(as.character(df_path$NeuroSurgMajor)), na.rm = TRUE)
     }
-    
-    if(is.na(highest_level)|highest_level != 1) {
+
+    if (is.na(highest_level) | highest_level != 1) {
       return("NO HLC")
     }
-    
+
     twp <- df_path$closest_tp[1]
-    
-    iTRAQI_path_facilities <- 
-      polyline_paths |> 
-      filter(town_point == twp) |> 
-      mutate(destination = ifelse(destination == "NA", NA, destination)) |> 
-      pull(destination) |> 
-      unique() |> 
+
+    iTRAQI_path_facilities <-
+      polyline_paths |>
+      filter(town_point == twp) |>
+      mutate(destination = ifelse(destination == "NA", NA, destination)) |>
+      pull(destination) |>
+      unique() |>
       na.omit()
-    
+
     observed_path_facilities <-
-      df_path |> 
-      mutate(FACILITY_NAME_Clean = ifelse(FACILITY_NAME_Clean == "NA", NA, FACILITY_NAME_Clean)) |> 
-      pull(FACILITY_NAME_Clean) |> 
-      unique() |> 
+      df_path |>
+      mutate(FACILITY_NAME_Clean = ifelse(FACILITY_NAME_Clean == "NA", NA, FACILITY_NAME_Clean)) |>
+      pull(FACILITY_NAME_Clean) |>
+      unique() |>
       na.omit()
-    
+
     brisbane_hospitals <- c("RBWH", "PAH", "QCH", "PRINCESS ALEXANDRA")
-    
+
     iTRAQI_path_facilities[iTRAQI_path_facilities %in% brisbane_hospitals] <- "BRISBANE-MAJOR"
     observed_path_facilities[observed_path_facilities %in% brisbane_hospitals] <- "BRISBANE-MAJOR"
-    
-    
-    if(all(iTRAQI_path_facilities == observed_path_facilities)) {
+
+
+    if (all(iTRAQI_path_facilities == observed_path_facilities)) {
       return("FOLLOWED ITRAQI")
     } else {
       return("DID NOT FOLLOW ITRAQI")
     }
   }
-  
-  path_categories <- observed_paths_clean |> 
-    split(observed_paths_clean$pu_id) |> 
-    map(categorise_path) |> 
-    (\(x) do.call("c", x))() 
+
+  path_categories <- observed_paths_clean |>
+    split(observed_paths_clean$pu_id) |>
+    map(categorise_path) |>
+    (\(x) do.call("c", x))()
   # browser()
   df_path_categories <- data.frame(
     pu_id = names(path_categories),
     path_category = unlist(path_categories)
-  ) |> 
+  ) |>
     remove_rownames()
-  
+
   observed_paths_processed <-
-    observed_paths_clean |> 
-    left_join(df_path_categories) |> 
+    observed_paths_clean |>
+    left_join(df_path_categories) |>
     mutate(
       Arrival_ReferralPathway = haven::as_factor(Arrival_ReferralPathway),
       facility_and_mode = glue::glue("{FACILITY_NAME_Clean} ({Arrival_ReferralPathway})")
@@ -196,7 +196,7 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
       "<b>centres</b>: <br>{paste0(facility_and_mode[!is.na(FACILITY_NAME_Clean)], collapse = ',<br>')}"
     )) |>
     ungroup()
-  
+
   saveRDS(observed_paths_processed, file.path(fixtures_path, "observed_paths.rds"))
   observed_paths_processed
 }

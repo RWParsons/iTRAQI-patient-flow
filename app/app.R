@@ -46,7 +46,7 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
 
     observeEvent(input$map_marker_click, {
       group_ids <- get_groups_marker_click(
-        marker_id = input$map_marker_click$id, 
+        marker_id = input$map_marker_click$id,
         polyline_paths = polyline_paths,
         observed_polyline_paths = observed_polyline_paths,
         observed_paths = observed_paths,
@@ -55,16 +55,16 @@ iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
       )
 
       leafletProxy("map") |>
-        hideGroup(group_ids$hide_groups) |> 
+        hideGroup(group_ids$hide_groups) |>
         showGroup(group_ids$show_groups)
     })
-    
+
     observeEvent(input$path_categories, ignoreNULL = FALSE, {
       group_ids <- get_groups_path_cats(
         path_cats = input$path_categories,
         observed_paths = observed_paths
       )
-      
+
       leafletProxy("map") |>
         hideGroup(group_ids$hide_groups) |>
         showGroup(group_ids$show_groups)
