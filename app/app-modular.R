@@ -20,6 +20,7 @@ observed_polyline_paths <- process_observed_polyline_paths(observed_paths)
 
 source(file.path(app_dir, "mod-filters.R"))
 source(file.path(app_dir, "mod-map-tab.R"))
+source(file.path(app_dir, "mod-marker-click.R"))
 
 moduleServer <- function(id, module) {
   callModule(module, id)

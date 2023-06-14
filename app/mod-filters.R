@@ -2,7 +2,7 @@
 
 
 # Other module - UI 2 #
-uimod_map_filters <- function(id) {
+ui_map_filters <- function(id) {
   ns <- NS(id)
   tagList(
     absolutePanel(
@@ -22,7 +22,7 @@ uimod_map_filters <- function(id) {
 
 
 # Other module - Server 2 #
-servmod_map_filters <- function(id, passMap) {
+server_map_filters <- function(id, passMap) {
   moduleServer(id, function(input, output, session) {
     ns <- NS(id)
 
