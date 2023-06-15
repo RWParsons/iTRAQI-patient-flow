@@ -1,74 +1,51 @@
-iTRAQI_vis_app <- function(iTRAQI_paths, facilities, observed_paths) {
-  source("app/packages.R")
-  source("app/constants.R")
-  source("app/map-builders.R")
-  source("app/base-map.R")
-  source("app/marker-click.R")
-  source("app/path-category-controls.R")
+# app.R
+
+# saveRDS(df_itraqi_times, "app/fixtures/df_itraqi_times.rds")
+# saveRDS(df_facilities, "app/fixtures/df_facilities.rds")
+# saveRDS(df_times_short, "app/fixtures/df_times_short.rds")
+
+iTRAQI_paths <- readRDS(file.path(here::here(), "app/fixtures/df_itraqi_times.rds"))
+facilities <- readRDS(file.path(here::here(), "app/fixtures/df_facilities.rds"))
+observed_paths <- readRDS(file.path(here::here(), "app/fixtures/df_times_short.rds"))
+
+app_dir <- file.path(here::here(), "app")
+
+source(file.path(app_dir, "packages.R"))
+source(file.path(app_dir, "constants.R"))
+source(file.path(app_dir, "map-builders.R"))
+source(file.path(app_dir, "base-map.R"))
+source(file.path(app_dir, "marker-click.R"))
+source(file.path(app_dir, "path-category-controls.R"))
+
+iTRAQI_paths <<- process_iTRAQI_paths(iTRAQI_paths)
+facilities <<- process_facilities(facilities)
+polyline_paths <<- process_polyline_paths(iTRAQI_paths, facilities)
+observed_paths <<- process_observed_paths(observed_paths, iTRAQI_paths, polyline_paths)
+observed_polyline_paths <<- process_observed_polyline_paths(observed_paths)
+
+source(file.path(app_dir, "mod-filters.R"))
+source(file.path(app_dir, "mod-map-tab.R"))
+source(file.path(app_dir, "mod-marker-click.R"))
 
 
-  iTRAQI_paths <- process_iTRAQI_paths(iTRAQI_paths)
-  facilities <- process_facilities(facilities)
-  polyline_paths <- process_polyline_paths(iTRAQI_paths, facilities)
-  observed_paths <- process_observed_paths(observed_paths, iTRAQI_paths, polyline_paths)
-  observed_polyline_paths <- process_observed_polyline_paths(observed_paths)
-  # browser()
-  ui <-
-    navbarPage(
-      "iTRAQI-patient-flow",
-      id = "nav",
-      tabPanel(
-        "Map",
-        useShinyjs(),
-        div(
-          class = "outer",
-          tags$head(
-            includeCSS("styles.css"),
-            tags$script(src = "script.js")
-          ),
-          leafletOutput("map", width = "100%", height = "100%"),
-          ui_panel
-        )
-      )
-    )
-
-  server <- function(input, output, session) {
-    output$map <- renderLeaflet({
-      base_map(
-        map_bounds = map_bounds,
-        facilities = facilities,
-        iTRAQI_paths = iTRAQI_paths,
-        polyline_paths = polyline_paths,
-        observed_paths = observed_paths,
-        observed_polyline_paths = observed_polyline_paths
-      )
-    })
-
-    observeEvent(input$map_marker_click, {
-      group_ids <- get_groups_marker_click(
-        marker_id = input$map_marker_click$id,
-        polyline_paths = polyline_paths,
-        observed_polyline_paths = observed_polyline_paths,
-        observed_paths = observed_paths,
-        facilities = facilities,
-        iTRAQI_paths = iTRAQI_paths
-      )
-
-      leafletProxy("map") |>
-        hideGroup(group_ids$hide_groups) |>
-        showGroup(group_ids$show_groups)
-    })
-
-    observeEvent(input$path_categories, ignoreNULL = FALSE, {
-      group_ids <- get_groups_path_cats(
-        path_cats = input$path_categories,
-        observed_paths = observed_paths
-      )
-
-      leafletProxy("map") |>
-        hideGroup(group_ids$hide_groups) |>
-        showGroup(group_ids$show_groups)
-    })
-  }
-  shinyApp(ui = ui, server = server)
+moduleServer <- function(id, module) {
+  callModule(module, id)
 }
+
+ui <- navbarPage(
+  "iTRAQI-patient-flow",
+  id = "nav",
+  tabPanel(
+    "Map",
+    useShinyjs(),
+    tagList(
+      ui_map("main")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  server_map("main")
+  server_mapclick("main") # Same namespace!
+}
+shinyApp(ui, server)

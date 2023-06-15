@@ -1,6 +1,6 @@
 # constants.R
 
-fixtures_path <- "app/fixtures"
+fixtures_path <- file.path(here::here(), "app", "fixtures")
 
 map_bounds <- list(
   lng1 = 115,
