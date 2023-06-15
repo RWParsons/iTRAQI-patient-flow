@@ -84,7 +84,29 @@ df_times_short <- lapply(
   (\(x) do.call("rbind", x))() |> mutate(pu_id = paste0("ID-", pu_id)) # make pu_id a character so that it works nicer as an ID for leaflet
 ```
 
+### add death flags to observed data
+```{r}
+# take earliest flag (order: QAS-ED-Hosp) and add label to popup if any=1
+df_death_flags2 <-
+  df_death_flags |> 
+  mutate(across(!pu_id, \(x) ifelse(is.na(x), 0, x))) |> 
+  pivot_longer(!pu_id) |> 
+  group_by(pu_id) |> 
+  slice(1:which.max(value)) |> 
+  ungroup() |> 
+  filter(value == 1) |> 
+  mutate(pu_id = paste0("ID-", pu_id)) |> 
+  select(pu_id, death_flag = name) |> 
+  mutate(death_flag = case_when(
+    death_flag == "QASDeceasedEnc" ~ "QAS",
+    death_flag == "HospDiedFlag" ~ "Hospital"
+  ))
 
+df_times_short <- 
+  df_times_short |> 
+  left_join(df_death_flags2, by = "pu_id") |> 
+  mutate(death_flag = replace_na(death_flag, "Survived"))
+```
 
 ```{r}
 # add facilities and their coords for those referred to in the RSQ pathways (iTRAQI) but not in the df_facilities
@@ -111,11 +133,20 @@ df_facilities <-
   df_facilities |> 
   filter(!FACILITY_NAME_Clean %in% df_new_facilities_with_coords$FACILITY_NAME_Clean) |> 
   bind_rows(df_new_facilities_with_coords)
+
+
 ```
 
-# visualise iTRAQI paths
+
 ```{r}
-source("app/app-modular.R")
+# saveRDS(df_itraqi_times, "app/fixtures/df_itraqi_times.rds")
+# saveRDS(df_facilities, "app/fixtures/df_facilities.rds")
+# saveRDS(df_times_short, "app/fixtures/df_times_short.rds")
+```
+
+# visualise iTRAQI paths on shiny app
+```{r}
+shiny::runApp("app")
 ```
 
 
