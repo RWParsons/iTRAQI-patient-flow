@@ -175,13 +175,13 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     split(observed_paths_clean$pu_id) |>
     map(categorise_path) |>
     (\(x) do.call("c", x))()
-  # browser()
+  
   df_path_categories <- data.frame(
     pu_id = names(path_categories),
     path_category = unlist(path_categories)
   ) |>
     remove_rownames()
-
+  
   observed_paths_processed <-
     observed_paths_clean |>
     left_join(df_path_categories) |>
@@ -192,6 +192,7 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     group_by(pu_id) |>
     mutate(popup = glue::glue(
       "<b>pu_id</b>: {pu_id} <br><br>",
+      "{ifelse(death_flag == 'Survived', '', paste0('<b>Died (', death_flag, ')'))}</b><br><br>",
       "<b>closest iTRAQI point</b>: {closest_town_name} ({path_category})<br><br>",
       "<b>centres</b>: <br>{paste0(facility_and_mode[!is.na(FACILITY_NAME_Clean)], collapse = ',<br>')}"
     )) |>
