@@ -30,21 +30,25 @@ moduleServer <- function(id, module) {
 }
 
 # Modules ------------------------
-
-
 ### main map
 ui_map <- function(id) {
   ns <- NS(id)
-  tagList(
-    leafletOutput(ns("map")),
-    ui_map_filters(ns("filter"))
+  div(
+    class = "outer",
+    tags$head(
+      includeCSS("styles.css"),
+      tags$script(src = "script.js")
+    ),
+    tagList(
+      leafletOutput(ns("map"), width = "100%", height = "100%"),
+      ui_map_filters(ns("filter"))
+    )
   )
+  
 }
 
 server_map <- function(id) {
   moduleServer(id, function(input, output, session) {
-    # output$map <- renderLeaflet(quake_map(QUAKES))
-    
     output$map <- renderLeaflet({
       base_map(
         map_bounds = map_bounds,
@@ -58,7 +62,6 @@ server_map <- function(id) {
     
     proxymap <- reactive(leafletProxy('map'))
     server_map_filters("filter", proxymap)
-    # server_mapclick("map", proxymap)
   })
 }
 
@@ -66,11 +69,6 @@ server_map <- function(id) {
 ### mapclick
 server_mapclick <- function(id) {
   moduleServer(id, function(input, output, session) {
-    observeEvent(input$map_marker_click, {
-      print(input$map_marker_click)
-      leafletProxy('map') |> hideGroup(input$map_marker_click$group)
-    })
-    
     observeEvent(input$map_marker_click, {
       group_ids <- get_groups_marker_click(
         marker_id = input$map_marker_click$id,
@@ -91,9 +89,18 @@ server_mapclick <- function(id) {
 
 # App ---------------------
 mapApp <- function() {
-  ui <- fluidPage(
-    ui_map("main")
+  ui <-navbarPage(
+    "iTRAQI-patient-flow",
+    id = "nav",
+    tabPanel(
+      "Map",
+      useShinyjs(),
+      tagList(
+        ui_map("main")
+      )
+    )
   )
+  
   server <- function(input, output, session) {
     server_map("main")
     server_mapclick("main") # Same namespace!

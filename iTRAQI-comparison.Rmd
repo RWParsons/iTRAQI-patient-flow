@@ -100,8 +100,8 @@ df_new_facilities_with_coords <- list(
   c("BOULIA PRIMARY HEALTH CENTRE", -22.908133626306732, 139.90838848311506),
   c("TEXAS HOSPITAL", -28.849736273857026, 151.17710790186513),
   c("BIRDSVILLE PRIMARY HEALTH CENTRE", -25.897497103362916, 139.35551489854396)
-) %>%
-  do.call("rbind", .) |> 
+) |> 
+  (\(x) do.call("rbind", x))() |> 
   data.frame() |> 
   setNames(c("FACILITY_NAME_Clean", "Latitude", "Longitude")) |> 
   mutate(across(!FACILITY_NAME_Clean, as.numeric),
