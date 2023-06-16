@@ -8,7 +8,7 @@ ui_map_filters <- function(id) {
     absolutePanel(
       id = "controls", class = "panel panel-default", fixed = TRUE,
       draggable = FALSE, top = 370, left = "auto", right = 10, bottom = "auto",
-      width = 250, height = 220,
+      width = 330, height = 440,
       h4("Path adherence"),
       checkboxGroupInput(
         inputId = ns("path_categories"),
@@ -22,7 +22,8 @@ ui_map_filters <- function(id) {
         label = NULL,
         choices = death_flags,
         selected = death_flags
-      )
+      ),
+      tableOutput(ns("freq_table"))
     )
   )
 }
@@ -43,6 +44,35 @@ server_map_filters <- function(id, passMap) {
       passMap() |>
         hideGroup(group_ids$hide_groups) |>
         showGroup(group_ids$show_groups)
+      
+      df_op <- 
+        observed_paths |> 
+        group_by(pu_id) |> 
+        slice(1) |> 
+        ungroup() |> 
+        mutate(across(c(path_category, death_flag), as.factor))
+      
+      df_op_freq <-
+        df_op |> 
+        group_by(path_category, death_flag) |> 
+        summarize(n_all = n())
+      
+      df_filtered_freq <-
+        df_op |> 
+        filter(path_category %in% input$path_categories, death_flag %in% input$death_flags_cb) |> 
+        group_by(path_category, death_flag, .drop=FALSE) |> 
+        summarize(n_filtered = n())
+        
+      df_freq_combined <- 
+        inner_join(df_op_freq, df_filtered_freq, by = c("path_category", "death_flag")) |> 
+        mutate(cell_content = paste0(n_filtered, "/", n_all)) |> 
+        select(-n_all, -n_filtered) |> 
+        pivot_wider(names_from = death_flag, values_from = cell_content) |> 
+        rename("Path adherence" = path_category)
+      
+      output$freq_table <- renderTable({
+        df_freq_combined
+      })
     })
   })
 }
