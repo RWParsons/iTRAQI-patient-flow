@@ -67,11 +67,38 @@ server_map_filters <- function(id, passMap) {
         inner_join(df_op_freq, df_filtered_freq, by = c("path_category", "death_flag")) |> 
         mutate(cell_content = paste0(n_filtered, "/", n_all)) |> 
         select(-n_all, -n_filtered) |> 
-        pivot_wider(names_from = death_flag, values_from = cell_content) |> 
-        rename("Path adherence" = path_category)
+        pivot_wider(names_from = death_flag, values_from = cell_content)
+      
+      df_combined_for_totals <- 
+        cbind(df_filtered_freq, select(ungroup(df_op_freq), n_all)) |> 
+        ungroup()
+      
+      path_cat_totals <-
+        df_combined_for_totals |> 
+        group_by(path_category) |> 
+        summarize(
+          pc_totals = sum(n_all),
+          filtered_totals = sum(n_filtered)
+        ) |> 
+        mutate(cell_content = paste0(filtered_totals, "/", pc_totals)) |> 
+        select(path_category, total = cell_content)
+      
+      death_flag_totals <-
+        df_combined_for_totals |> 
+        group_by(death_flag) |> 
+        summarize(
+          pc_totals = sum(n_all),
+          filtered_totals = sum(n_filtered)
+        ) |> 
+        mutate(cell_content = paste0(filtered_totals, "/", pc_totals)) |> 
+        select(death_flag, cell_content)
+      
+      # TODO: add death_flag and grand totals row to freq_table
       
       output$freq_table <- renderTable({
-        df_freq_combined
+        df_freq_combined |> 
+          inner_join(path_cat_totals)
+        
       })
     })
   })
