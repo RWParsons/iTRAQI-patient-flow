@@ -131,10 +131,11 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     #     - DIDN'T MAKE IT TO HIGH LEVEL CARE
     #     - DID MAKE IT TO HIGH LEVEL CARE & FOLLOWED ITRAQI PATH
     #     - DID MAKE IT TO HIGH LEVEL CARE & DID NOT FOLLOW ITRAQI PATH
+    # if(any(df_path$pu_id == "ID-1001323")) browser()
     if (all(is.na(df_path$NeuroSurgMajor))) {
       highest_level <- NA
     } else {
-      highest_level <- max(as.numeric(as.character(df_path$NeuroSurgMajor)), na.rm = TRUE)
+      highest_level <- min(as.numeric(as.character(df_path$NeuroSurgMajor)), na.rm = TRUE)
     }
 
     if (is.na(highest_level) | highest_level != 1) {
