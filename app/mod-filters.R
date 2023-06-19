@@ -8,7 +8,7 @@ ui_map_filters <- function(id) {
     absolutePanel(
       id = "controls", class = "panel panel-default", fixed = TRUE,
       draggable = FALSE, top = 370, left = "auto", right = 10, bottom = "auto",
-      width = 430, height = 440,
+      width = 450, height = 440,
       h4("Path adherence"),
       checkboxGroupInput(
         inputId = ns("path_categories"),
@@ -45,60 +45,44 @@ server_map_filters <- function(id, passMap) {
         hideGroup(group_ids$hide_groups) |>
         showGroup(group_ids$show_groups)
       
-      df_op <- 
-        observed_paths |> 
-        group_by(pu_id) |> 
-        slice(1) |> 
-        ungroup() |> 
-        mutate(across(c(path_category, death_flag), as.factor))
-      
-      df_op_freq <-
-        df_op |> 
-        group_by(path_category, death_flag) |> 
-        summarize(n_all = n())
-      
-      df_filtered_freq <-
-        df_op |> 
-        filter(path_category %in% input$path_categories, death_flag %in% input$death_flags_cb) |> 
-        group_by(path_category, death_flag, .drop=FALSE) |> 
-        summarize(n_filtered = n())
-        
-      df_freq_combined <- 
-        inner_join(df_op_freq, df_filtered_freq, by = c("path_category", "death_flag")) |> 
-        mutate(cell_content = paste0(n_filtered, "/", n_all)) |> 
-        select(-n_all, -n_filtered) |> 
-        pivot_wider(names_from = death_flag, values_from = cell_content)
-      
-      df_combined_for_totals <- 
-        cbind(df_filtered_freq, select(ungroup(df_op_freq), n_all)) |> 
-        ungroup()
-      
-      path_cat_totals <-
-        df_combined_for_totals |> 
-        group_by(path_category) |> 
-        summarize(
-          pc_totals = sum(n_all),
-          filtered_totals = sum(n_filtered)
-        ) |> 
-        mutate(cell_content = paste0(filtered_totals, "/", pc_totals)) |> 
-        select(path_category, total = cell_content)
-      
-      death_flag_totals <-
-        df_combined_for_totals |> 
-        group_by(death_flag) |> 
-        summarize(
-          pc_totals = sum(n_all),
-          filtered_totals = sum(n_filtered)
-        ) |> 
-        mutate(cell_content = paste0(filtered_totals, "/", pc_totals)) |> 
-        select(death_flag, cell_content)
-      
       # TODO: add death_flag and grand totals row to freq_table
       
       output$freq_table <- renderTable({
-        df_freq_combined |> 
-          inner_join(path_cat_totals)
+        df_op <- 
+          observed_paths |> 
+          group_by(pu_id) |> 
+          slice(1) |> 
+          ungroup() |> 
+          mutate(across(c(path_category, death_flag), as.factor))
         
+        df_op_freq <-
+          df_op |> 
+          group_by(path_category, death_flag) |> 
+          summarize(n_all = n())
+        
+        df_op_freq <- 
+          df_op |> 
+          group_by(path_category, death_flag) |> 
+          summarize(n_all = n()) |> 
+          pivot_wider(names_from = death_flag, values_from = n_all) |> 
+          janitor::adorn_totals("row") |> 
+          janitor::adorn_totals("col") |> 
+          pivot_longer(!path_category, values_to = "all")
+        
+        df_filtered_freq <-
+          df_op |> 
+          filter(path_category %in% input$path_categories, death_flag %in% input$death_flags_cb) |> 
+          group_by(path_category, death_flag, .drop=FALSE) |> 
+          summarize(n_filtered = n()) |> 
+          pivot_wider(names_from = death_flag, values_from = n_filtered) |> 
+          janitor::adorn_totals("row") |> 
+          janitor::adorn_totals("col") |> 
+          pivot_longer(!path_category, values_to = "filtered")
+        
+        inner_join(df_op_freq, df_filtered_freq, by = c("path_category", "name")) |> 
+          mutate(cell_content = paste0(filtered, "/", all)) |> 
+          select(-all_of(c("all", "filtered"))) |> 
+          pivot_wider(names_from = "name", values_from = "cell_content")
       })
     })
   })
