@@ -4,7 +4,14 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
   if ("base-map.rds" %in% list.files(fixtures_path)) {
     return(readRDS(file.path(fixtures_path, "base-map.rds")))
   }
-
+  
+  # load palettes and acute raster from iTRAQI GitHub repo
+  source(file.path(here::here(), "app", "palettes.R"))
+  
+  githubURL <- ("https://raw.githubusercontent.com/RWParsons/iTRAQI_app/main/input/layers/acute_raster.rds")
+  fp <- download.file(githubURL, file.path(fixtures_path, "acute_raster.rds"), method="curl")
+  acute_raster <- readRDS(file.path(fixtures_path, "acute_raster.rds"))
+  
   sample_town_points <- unique(iTRAQI_paths$town_point)
   sample_pu_ids <- unique(observed_paths$pu_id)
 
@@ -55,8 +62,14 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       fillColor = "orange",
       color = "orange",
       popup = observed_paths$popup
+    ) |> 
+    addRasterImage(
+      data = acute_raster,
+      x = raster::raster(acute_raster, layer = 1),
+      group = "acute_raster",
+      colors = palNum
     )
-  # return(map)
+
   pb <- progress_bar$new(total = length(sample_town_points))
 
   cat("Adding polylines for iTRAQI paths\n\n")

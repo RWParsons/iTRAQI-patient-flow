@@ -1,5 +1,10 @@
 # app.R
 
+# TODO
+#   - add time to acute care to observed_paths df
+#   - add button for colouring observed points by palNum vs all orange (default)
+
+
 # saveRDS(df_itraqi_times, "app/fixtures/df_itraqi_times.rds")
 # saveRDS(df_facilities, "app/fixtures/df_facilities.rds")
 # saveRDS(df_times_short, "app/fixtures/df_times_short.rds")
@@ -46,6 +51,6 @@ ui <- navbarPage(
 
 server <- function(input, output, session) {
   server_map("main")
-  server_mapclick("main") # Same namespace!
+  server_mapclick("main")
 }
 shinyApp(ui, server)

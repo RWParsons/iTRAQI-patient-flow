@@ -10,6 +10,11 @@ ui_map_filters <- function(id) {
       draggable = FALSE, top = 370, left = "auto", right = 10, bottom = "auto",
       width = 450, height = 440,
       h4("Path adherence"),
+      materialSwitch(
+        inputId = ns("acute_raster_select"),
+        label = "iTRAQI acute raster",
+        status = "danger"
+      ),
       checkboxGroupInput(
         inputId = ns("path_categories"),
         label = NULL,
@@ -33,6 +38,14 @@ ui_map_filters <- function(id) {
 server_map_filters <- function(id, passMap) {
   moduleServer(id, function(input, output, session) {
     ns <- NS(id)
+    
+    observeEvent(input$acute_raster_select, {
+      if(input$acute_raster_select) {
+        passMap() |> showGroup("acute_raster")
+      } else {
+        passMap() |> hideGroup("acute_raster")
+      }
+    })
 
     observeEvent(list(input$path_categories, input$death_flags_cb), ignoreNULL = FALSE, {
       group_ids <- get_groups_path_cats(
@@ -45,43 +58,42 @@ server_map_filters <- function(id, passMap) {
         hideGroup(group_ids$hide_groups) |>
         showGroup(group_ids$show_groups)
       
-      # TODO: add death_flag and grand totals row to freq_table
       
       output$freq_table <- renderTable({
-        df_op <- 
-          observed_paths |> 
-          group_by(pu_id) |> 
-          slice(1) |> 
-          ungroup() |> 
+        df_op <-
+          observed_paths |>
+          group_by(pu_id) |>
+          slice(1) |>
+          ungroup() |>
           mutate(across(c(path_category, death_flag), as.factor))
-        
+
         df_op_freq <-
-          df_op |> 
-          group_by(path_category, death_flag) |> 
+          df_op |>
+          group_by(path_category, death_flag) |>
           summarize(n_all = n())
-        
-        df_op_freq <- 
-          df_op |> 
-          group_by(path_category, death_flag) |> 
-          summarize(n_all = n()) |> 
-          pivot_wider(names_from = death_flag, values_from = n_all) |> 
-          janitor::adorn_totals("row") |> 
-          janitor::adorn_totals("col") |> 
+
+        df_op_freq <-
+          df_op |>
+          group_by(path_category, death_flag) |>
+          summarize(n_all = n()) |>
+          pivot_wider(names_from = death_flag, values_from = n_all) |>
+          janitor::adorn_totals("row") |>
+          janitor::adorn_totals("col") |>
           pivot_longer(!path_category, values_to = "all")
-        
+
         df_filtered_freq <-
-          df_op |> 
-          filter(path_category %in% input$path_categories, death_flag %in% input$death_flags_cb) |> 
-          group_by(path_category, death_flag, .drop=FALSE) |> 
-          summarize(n_filtered = n()) |> 
-          pivot_wider(names_from = death_flag, values_from = n_filtered) |> 
-          janitor::adorn_totals("row") |> 
-          janitor::adorn_totals("col") |> 
+          df_op |>
+          filter(path_category %in% input$path_categories, death_flag %in% input$death_flags_cb) |>
+          group_by(path_category, death_flag, .drop=FALSE) |>
+          summarize(n_filtered = n()) |>
+          pivot_wider(names_from = death_flag, values_from = n_filtered) |>
+          janitor::adorn_totals("row") |>
+          janitor::adorn_totals("col") |>
           pivot_longer(!path_category, values_to = "filtered")
-        
-        inner_join(df_op_freq, df_filtered_freq, by = c("path_category", "name")) |> 
-          mutate(cell_content = paste0(filtered, "/", all)) |> 
-          select(-all_of(c("all", "filtered"))) |> 
+
+        inner_join(df_op_freq, df_filtered_freq, by = c("path_category", "name")) |>
+          mutate(cell_content = paste0(filtered, "/", all)) |>
+          select(-all_of(c("all", "filtered"))) |>
           pivot_wider(names_from = "name", values_from = "cell_content")
       })
     })
