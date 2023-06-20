@@ -1,5 +1,5 @@
 # mod-filters.R
-
+source(file.path(here::here(), "app", "setShapeStyle.R"))
 
 # Other module - UI 2 #
 ui_map_filters <- function(id) {
@@ -8,11 +8,16 @@ ui_map_filters <- function(id) {
     absolutePanel(
       id = "controls", class = "panel panel-default", fixed = TRUE,
       draggable = FALSE, top = 370, left = "auto", right = 10, bottom = "auto",
-      width = 450, height = 470,
+      width = 450, height = 500,
       h4("Path adherence"),
       materialSwitch(
         inputId = ns("acute_raster_select"),
         label = "iTRAQI acute raster",
+        status = "danger"
+      ),
+      materialSwitch(
+        inputId = ns("travel_time_marker_col"),
+        label = "Colour markers by travel time",
         status = "danger"
       ),
       checkboxGroupInput(
@@ -46,18 +51,24 @@ server_map_filters <- function(id, passMap) {
         passMap() |> hideGroup("acute_raster")
       }
     })
-
-    observeEvent(list(input$path_categories, input$death_flags_cb), ignoreNULL = FALSE, {
+    
+    observeEvent(list(input$path_categories, input$death_flags_cb, input$travel_time_marker_col), ignoreNULL = FALSE, {
       group_ids <- get_groups_path_cats(
         observed_paths = observed_paths,
         path_cats = input$path_categories,
         death_flag_select = input$death_flags_cb
       )
+      
+      if(input$travel_time_marker_col) {
+        group_ids$show_groups <- paste0("traveltime-", group_ids$show_groups)
+        group_ids$hide_groups <- unique(c( paste0("traveltime-", group_ids$hide_groups), observed_paths$pu_id))
+      } else {
+        group_ids$hide_groups <- unique(c(group_ids$hide_groups, paste0("traveltime-", observed_paths$pu_id)))
+      }
 
       passMap() |>
         hideGroup(group_ids$hide_groups) |>
         showGroup(group_ids$show_groups)
-      
       
       output$freq_table <- renderTable({
         df_op <-
