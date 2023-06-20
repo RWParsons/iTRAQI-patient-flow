@@ -36,6 +36,7 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
     hideGroup(str_replace(sample_pu_ids, "ID-", "PL-obs")) |>
     addCircleMarkers(
       layerId = iTRAQI_paths$town_point,
+      group = iTRAQI_paths$town_point,
       lng = iTRAQI_paths$xcoord,
       lat = iTRAQI_paths$ycoord,
       radius = 2,

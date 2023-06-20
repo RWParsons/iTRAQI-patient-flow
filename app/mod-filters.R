@@ -7,8 +7,8 @@ ui_map_filters <- function(id) {
   tagList(
     absolutePanel(
       id = "controls", class = "panel panel-default", fixed = TRUE,
-      draggable = FALSE, top = 370, left = "auto", right = 10, bottom = "auto",
-      width = 450, height = 500,
+      draggable = TRUE, top = 370, left = "auto", right = 10, bottom = "auto",
+      width = 450, height = 550,
       h4("Path adherence"),
       materialSwitch(
         inputId = ns("acute_raster_select"),
@@ -19,6 +19,12 @@ ui_map_filters <- function(id) {
         inputId = ns("travel_time_marker_col"),
         label = "Colour markers by travel time",
         status = "danger"
+      ),
+      checkboxGroupInput(
+        inputId = ns("marker_groups"),
+        label = NULL,
+        choices = c("iTRAQI points", "observed points"),
+        selected = c("iTRAQI points", "observed points")
       ),
       checkboxGroupInput(
         inputId = ns("path_categories"),
@@ -52,7 +58,10 @@ server_map_filters <- function(id, passMap) {
       }
     })
     
-    observeEvent(list(input$path_categories, input$death_flags_cb, input$travel_time_marker_col), ignoreNULL = FALSE, {
+    observeEvent(list(input$path_categories, 
+                      input$death_flags_cb, 
+                      input$travel_time_marker_col, 
+                      input$marker_groups), ignoreNULL = FALSE, {
       group_ids <- get_groups_path_cats(
         observed_paths = observed_paths,
         path_cats = input$path_categories,
@@ -66,9 +75,22 @@ server_map_filters <- function(id, passMap) {
         group_ids$hide_groups <- unique(c(group_ids$hide_groups, paste0("traveltime-", observed_paths$pu_id)))
       }
 
-      passMap() |>
-        hideGroup(group_ids$hide_groups) |>
-        showGroup(group_ids$show_groups)
+      
+      if ("observed points" %in% input$marker_groups) {
+        passMap() |>
+          hideGroup(group_ids$hide_groups) |>
+          showGroup(group_ids$show_groups)
+      } else {
+        passMap() |> 
+          hideGroup(c(paste0("traveltime-", observed_paths$pu_id), observed_paths$pu_id))
+      }
+      
+      if ("iTRAQI points" %in% input$marker_groups) {
+        passMap() |> showGroup(iTRAQI_paths$town_point)
+      } else {
+        passMap() |> hideGroup(iTRAQI_paths$town_point)
+      }
+      
       
       output$freq_table <- renderTable({
         df_op <-
