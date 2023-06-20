@@ -191,8 +191,12 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
       facility_and_mode = glue::glue("{FACILITY_NAME_Clean} ({Arrival_ReferralPathway})")
     ) |>
     group_by(pu_id) |>
+    mutate(start_time = min(DateTimePoints),
+           end_time = max(DateTimePoints),
+           total_time = as.numeric(difftime(end_time, start_time, units = "mins"))) |> 
     mutate(popup = glue::glue(
       "<b>pu_id</b>: {pu_id} <br><br>",
+      "<b>travel time</b>: {round(total_time)}<br><br>",
       "{ifelse(death_flag == 'Survived', '', paste0('<b>Died (', death_flag, ')'))}</b><br><br>",
       "<b>closest iTRAQI point</b>: {closest_town_name} ({path_category})<br><br>",
       "<b>centres</b>: <br>{paste0(facility_and_mode[!is.na(FACILITY_NAME_Clean)], collapse = ',<br>')}"

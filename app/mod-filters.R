@@ -8,7 +8,7 @@ ui_map_filters <- function(id) {
     absolutePanel(
       id = "controls", class = "panel panel-default", fixed = TRUE,
       draggable = FALSE, top = 370, left = "auto", right = 10, bottom = "auto",
-      width = 450, height = 440,
+      width = 450, height = 470,
       h4("Path adherence"),
       materialSwitch(
         inputId = ns("acute_raster_select"),
