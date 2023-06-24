@@ -7,8 +7,8 @@ ui_map_filters <- function(id) {
   tagList(
     absolutePanel(
       id = "controls", class = "panel panel-default", fixed = TRUE,
-      draggable = TRUE, top = 370, left = "auto", right = 10, bottom = "auto",
-      width = 450, height = 550,
+      draggable = TRUE, top = 300, left = "auto", right = 10, bottom = "auto",
+      width = 510, height = 600,
       h4("Path adherence"),
       materialSwitch(
         inputId = ns("acute_raster_select"),
@@ -93,6 +93,7 @@ server_map_filters <- function(id, passMap) {
       
       
       output$freq_table <- renderTable({
+        # browser()
         df_op <-
           observed_paths |>
           group_by(pu_id) |>
@@ -107,7 +108,7 @@ server_map_filters <- function(id, passMap) {
 
         df_op_freq <-
           df_op |>
-          group_by(path_category, death_flag) |>
+          group_by(path_category, death_flag, .drop=FALSE) |>
           summarize(n_all = n()) |>
           pivot_wider(names_from = death_flag, values_from = n_all) |>
           janitor::adorn_totals("row") |>

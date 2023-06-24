@@ -1,7 +1,7 @@
 # path-category-controls.R
 
 path_cats <- c("NO HLC", "FOLLOWED ITRAQI", "DID NOT FOLLOW ITRAQI")
-death_flags <- c("Survived", "QAS", "Hospital")
+death_flags <- c("Survived", "QAS", "Hospital", "ED")
 get_groups_path_cats <- function(observed_paths, path_cats, death_flag_select) {
   
   show_groups <- observed_paths |> 
