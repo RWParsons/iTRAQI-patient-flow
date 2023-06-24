@@ -94,13 +94,22 @@ df_death_flags2 <-
   group_by(pu_id) |> 
   slice(1:which.max(value)) |> 
   ungroup() |> 
-  filter(value == 1) |> 
-  mutate(pu_id = paste0("ID-", pu_id)) |> 
-  select(pu_id, death_flag = name) |> 
-  mutate(death_flag = case_when(
-    death_flag == "QASDeceasedEnc" ~ "QAS",
-    death_flag == "HospDiedFlag" ~ "Hospital"
-  ))
+  filter(value %in% c(1, 2)) |> 
+  select(pu_id, death_flag = name) |>
+  mutate(
+    pu_id = paste0("ID-", pu_id),
+    death_flag = case_when(
+      death_flag == "QASDeceasedEnc" ~ "QAS",
+      death_flag == "HospDiedFlag" ~ "Hospital",
+      TRUE ~ "ED"
+    )
+  ) |> 
+  mutate(death_flag = factor(death_flag, levels = c("QAS", "ED", "Hospital"))) |> 
+  group_by(pu_id) |> 
+  arrange(death_flag) |> 
+  slice(1) |> 
+  ungroup() |> 
+  mutate(death_flag = as.character(death_flag))
 
 df_times_short <- 
   df_times_short |> 
