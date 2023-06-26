@@ -22,7 +22,6 @@ df_death_flags <- haven::read_spss(file.path(data_dir, "F_TableFlagsANDOutcomesS
   select(pu_id, QASDeceasedEnc, EDDiedFlag, HospDiedFlag) # take earliest flag (order: QAS-ED-Hosp) and add label to popup if any=1
 
 df_amb <- haven::read_spss(file.path(data_dir, "D_Table_AmbulanceContent.sav"))
-df_amb %>% plyr::count("PATIENT_OUTCOME_OBSERVED")
 df_ages <- haven::read_spss(file.path(data_dir, "D_Table_HospitalContent.sav"), col_select = c("pu_id", "PAT_AGE"))
 
 
@@ -40,7 +39,7 @@ fx_shorten_path <- function(pu_id_) {
     d |> 
     filter(!is.na(X_COORD)) |> 
     slice(1) |> 
-    mutate(NeuroSurgMajor = NA_integer_, FCLTY_ID = NA_integer_)
+    mutate(NeuroSurgMajor = NA_integer_, FCLTY_ID = NA_integer_, stay_duration = NA)
   
   centre_rows <-
     d |> 
@@ -50,7 +49,7 @@ fx_shorten_path <- function(pu_id_) {
     slice(1) |> 
     ungroup()
   
-  if(nrow(centre_rows) == 0) return(select(origin_row, pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor, FCLTY_ID, Arrival_ReferralPathway))
+  if(nrow(centre_rows) == 0) return(select(origin_row, pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor, FCLTY_ID, stay_duration, Arrival_ReferralPathway))
   
   # print(pu_id_)
   centre_rows <- centre_rows |> 
@@ -61,8 +60,57 @@ fx_shorten_path <- function(pu_id_) {
     select(-Latitude, -Longitude) |> 
     slice(1:which.min(NeuroSurgMajor))
   
+  f_get_duration <- function(d, time_wp, date_time) {
+    d_working <- 
+      d |>  
+      mutate(rn = row_number())
+    
+    start_row <- 
+      d_working |> 
+      filter(TimeWayPoint == time_wp, DateTimePoints == date_time)
+    
+    if(nrow(start_row)!= 1) {
+      cat('row num fail')
+      return(NA)
+    }
+    
+    loc_type <- case_when(
+      start_row$TimeWayPoint == "ED_START_DATETIME_Formatted" ~ "ED",
+      start_row$TimeWayPoint == "Hosp_START_DATETIME_Formatted" ~ "Hospital",
+      TRUE ~ NA
+    )
+      
+    if(is.na(loc_type)) {
+      cat("location is NA") 
+      return(NA)
+    }
+    
+    later_rows <- 
+      d_working |> 
+      filter(rn > start_row$rn)
+    
+    if(loc_type == "ED") {
+      end_time <- 
+        later_rows |> 
+        slice(which.max(TimeWayPoint == "ED_End_DATETIME_Formatted")) |> 
+        pull(DateTimePoints)
+    } else if(loc_type == "Hospital") {
+      end_time <- later_rows |> 
+        slice(which.max(TimeWayPoint == "Hosp_END_DATETIME_Formatted")) |> 
+        pull(DateTimePoints)
+    }
+    
+    return(as.numeric(difftime(end_time, start_row$DateTimePoints)))
+  }
+  
+  
+  centre_rows <-
+    centre_rows |> 
+    rowwise() |> 
+    mutate(stay_duration = f_get_duration(d=d, time_wp = TimeWayPoint, date_time = DateTimePoints))
+  
   bind_rows(origin_row, centre_rows) |> 
-    select(pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor, FCLTY_ID, Arrival_ReferralPathway)
+    select(pu_id, TimeWayPoint:FACILITY_NAME_Clean, NeuroSurgMajor, FCLTY_ID, stay_duration, Arrival_ReferralPathway)
 }
 
 
@@ -70,7 +118,8 @@ df_times_short <- lapply(
   unique(df_times$pu_id),
   fx_shorten_path
 ) |>
-  (\(x) do.call("rbind", x))() |> mutate(pu_id = paste0("ID-", pu_id)) # make pu_id a character so that it works nicer as an ID for leaflet
+  (\(x) do.call("rbind", x))() |>
+  mutate(pu_id = paste0("ID-", pu_id)) # make pu_id a character so that it works nicer as an ID for leaflet
 
 
 ### add death flags to observed data
