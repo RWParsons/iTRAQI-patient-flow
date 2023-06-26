@@ -188,7 +188,10 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     left_join(df_path_categories) |>
     mutate(
       Arrival_ReferralPathway = haven::as_factor(Arrival_ReferralPathway),
-      facility_and_mode = glue::glue("{FACILITY_NAME_Clean} ({Arrival_ReferralPathway})")
+      facility_and_mode = glue::glue(
+        "{FACILITY_NAME_Clean} ",
+        "(via {Arrival_ReferralPathway}; ",
+        "duration: {round(stay_duration)}mins)")
     ) |>
     group_by(pu_id) |>
     mutate(start_time = min(DateTimePoints),
