@@ -1,8 +1,10 @@
 # app.R
 
 # TODO
-#   - add time to acute care to observed_paths df
-#   - add button for colouring observed points by palNum vs all orange (default)
+#   > add minutes at each (optionally only the non-final) centre to the popup of observed points
+#   > add predicted itraqi time to each observed points on the popup
+#   > add plot to map similar to iTRAQI (x=predicted time, y=actual time) + geom_point() + geom_abline()
+#     with brush to filter markers on map
 
 
 # saveRDS(df_itraqi_times, "app/fixtures/df_itraqi_times.rds")
