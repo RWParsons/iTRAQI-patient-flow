@@ -8,9 +8,7 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
   # load palettes and acute raster from iTRAQI GitHub repo
   source(file.path(here::here(), "app", "palettes.R"))
   
-  githubURL <- ("https://raw.githubusercontent.com/RWParsons/iTRAQI_app/main/input/layers/acute_raster.rds")
-  fp <- download.file(githubURL, file.path(fixtures_path, "acute_raster.rds"), method="curl")
-  acute_raster <- readRDS(file.path(fixtures_path, "acute_raster.rds"))
+  acute_raster <- get_iTRAQI_raster()
   
   sample_town_points <- unique(iTRAQI_paths$town_point)
   sample_pu_ids <- unique(observed_paths$pu_id)

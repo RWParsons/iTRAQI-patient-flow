@@ -1,7 +1,6 @@
 # app.R
 
 # TODO
-#   > add predicted itraqi time to each observed points on the popup
 #   > add plot to map similar to iTRAQI (x=predicted time, y=actual time) + geom_point() + geom_abline()
 #     with brush to filter markers on map
 
@@ -18,6 +17,7 @@ app_dir <- file.path(here::here(), "app")
 
 source(file.path(app_dir, "packages.R"))
 source(file.path(app_dir, "constants.R"))
+source(file.path(app_dir, "data-downloads.R"))
 source(file.path(app_dir, "map-builders.R"))
 source(file.path(app_dir, "base-map.R"))
 source(file.path(app_dir, "marker-click.R"))
