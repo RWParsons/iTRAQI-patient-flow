@@ -5,6 +5,7 @@ source(file.path(here::here(), "app", "setShapeStyle.R"))
 ui_map_filters <- function(id) {
   ns <- NS(id)
   tagList(
+    # filters panel
     absolutePanel(
       id = "controls", class = "panel panel-default", fixed = TRUE,
       draggable = TRUE, top = 300, left = "auto", right = 10, bottom = "auto",
@@ -40,6 +41,20 @@ ui_map_filters <- function(id) {
         selected = death_flags
       ),
       tableOutput(ns("freq_table"))
+    ),
+    
+    # plot panel
+    absolutePanel(
+      id = "plot", class = "panel panel-default", fixed = TRUE,
+      draggable = TRUE, top = 300, left = 10, right = "auto", bottom = "auto",
+      width = 400, height = 400,
+      radioGroupButtons(
+        inputId = ns("plot_time_col"),
+        label = "", 
+        choices = c("iTRAQI predicted time", "Observed time"),
+        status = "primary"
+      ),
+      plotOutput(ns("plot"))
     )
   )
 }
@@ -91,6 +106,42 @@ server_map_filters <- function(id, passMap) {
         passMap() |> hideGroup(iTRAQI_paths$town_point)
       }
       
+      output$plot <- renderPlot({
+        hours_show <- 8
+        
+        plot_df <- 
+          observed_paths |> 
+          filter(
+            !pu_id %in% group_ids$hide_groups,
+            pu_id %in% group_ids$show_groups
+          ) |> 
+          select(pu_id, itraqi_pred, total_time) |> 
+          distinct() 
+        
+        if (input$plot_time_col == "iTRAQI predicted time") {
+          col_vec <- palNum(plot_df$itraqi_pred)
+        }  else {
+          col_vec <- palNum(plot_df$total_time)
+        }
+
+        ggplot() +
+          geom_point(data = plot_df, aes(itraqi_pred, total_time), col = col_vec) +
+          geom_abline() +
+          scale_x_continuous(
+            limits = c(0, hours_show*60),
+            breaks = seq(0, hours_show*60, 60)
+          ) +
+          scale_y_continuous(
+            limits = c(0, hours_show*60),
+            breaks = seq(0, hours_show*60, 60)
+          ) +
+          coord_equal() +
+          theme_bw() +
+          labs(
+            x = "iTRAQI predicted time (mins)",
+            y = "Observed travel time (mins)"
+          )
+      })
       
       output$freq_table <- renderTable({
         # browser()
