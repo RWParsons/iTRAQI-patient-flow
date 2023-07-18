@@ -11,6 +11,7 @@ ui_map_filters <- function(id) {
       draggable = TRUE, top = 300, left = "auto", right = 10, bottom = "auto",
       width = 510, height = 600,
       h4("Path adherence"),
+      actionButton(ns("browser"), "browser"),
       materialSwitch(
         inputId = ns("acute_raster_select"),
         label = "iTRAQI acute raster",
@@ -42,19 +43,22 @@ ui_map_filters <- function(id) {
       ),
       tableOutput(ns("freq_table"))
     ),
-    
     # plot panel
     absolutePanel(
       id = "plot", class = "panel panel-default", fixed = TRUE,
-      draggable = TRUE, top = 300, left = 10, right = "auto", bottom = "auto",
+      # draggable = TRUE,
+      top = 300, left = 10, right = "auto", bottom = "auto",
       width = 400, height = 400,
       radioGroupButtons(
         inputId = ns("plot_time_col"),
-        label = "", 
+        label = "",
         choices = c("iTRAQI predicted time", "Observed time"),
         status = "primary"
       ),
-      plotOutput(ns("plot"))
+      plotOutput(
+        ns("plot"),
+        brush = brushOpts(ns("plot_brush"))
+      )
     )
   )
 }
@@ -64,6 +68,10 @@ ui_map_filters <- function(id) {
 server_map_filters <- function(id, passMap) {
   moduleServer(id, function(input, output, session) {
     ns <- NS(id)
+    
+    observeEvent(input$browser,{
+      browser()
+    })
     
     observeEvent(input$acute_raster_select, {
       if(input$acute_raster_select) {
@@ -141,6 +149,20 @@ server_map_filters <- function(id, passMap) {
             x = "iTRAQI predicted time (mins)",
             y = "Observed travel time (mins)"
           )
+      })
+      
+      observeEvent(input$plot_brush, {
+        plot_df <- observed_paths |> 
+          filter(
+            !pu_id %in% group_ids$hide_groups,
+            pu_id %in% group_ids$show_groups
+          ) |> 
+          # select(pu_id, itraqi_pred, total_time) |> 
+          distinct()
+        
+        brushed_points <- brushedPoints(plot_df, input$plot_brush)
+        print(brushed_points)
+        # browser()
       })
       
       output$freq_table <- renderTable({
