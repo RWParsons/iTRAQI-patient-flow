@@ -115,40 +115,23 @@ server_map_filters <- function(id, passMap) {
       }
       
       output$plot <- renderPlot({
-        hours_show <- 8
+        # browser()
         
+        group_ids_plot <- group_ids
+        # group_ids_plot$hide_groups <- str_remove(group_ids$hide_groups, "traveltime-")
+        # group_ids_plot$show_groups <- str_remove(group_ids$show_groups, "traveltime-")
         plot_df <- 
           observed_paths |> 
           filter(
-            !pu_id %in% group_ids$hide_groups,
-            pu_id %in% group_ids$show_groups
+            !pu_id %in% group_ids_plot$hide_groups,
+            pu_id %in% group_ids_plot$show_groups
           ) |> 
           select(pu_id, itraqi_pred, total_time) |> 
           distinct() 
         
-        if (input$plot_time_col == "iTRAQI predicted time") {
-          col_vec <- palNum(plot_df$itraqi_pred)
-        }  else {
-          col_vec <- palNum(plot_df$total_time)
-        }
-
-        ggplot() +
-          geom_point(data = plot_df, aes(itraqi_pred, total_time), col = col_vec) +
-          geom_abline() +
-          scale_x_continuous(
-            limits = c(0, hours_show*60),
-            breaks = seq(0, hours_show*60, 60)
-          ) +
-          scale_y_continuous(
-            limits = c(0, hours_show*60),
-            breaks = seq(0, hours_show*60, 60)
-          ) +
-          coord_equal() +
-          theme_bw() +
-          labs(
-            x = "iTRAQI predicted time (mins)",
-            y = "Observed travel time (mins)"
-          )
+        
+        make_plot(plot_df, input$plot_time_col)
+        
       })
       
       observeEvent(input$plot_brush, {
@@ -205,4 +188,32 @@ server_map_filters <- function(id, passMap) {
       })
     })
   })
+}
+
+make_plot <- function(plot_df, plot_time_col) {
+  hours_show <- 8
+  
+  if (plot_time_col == "iTRAQI predicted time") {
+    col_vec <- palNum(plot_df$itraqi_pred)
+  }  else {
+    col_vec <- palNum(plot_df$total_time)
+  }
+  
+  ggplot() +
+    geom_point(data = plot_df, aes(itraqi_pred, total_time), col = col_vec) +
+    geom_abline() +
+    scale_x_continuous(
+      limits = c(0, hours_show*60),
+      breaks = seq(0, hours_show*60, 60)
+    ) +
+    scale_y_continuous(
+      limits = c(0, hours_show*60),
+      breaks = seq(0, hours_show*60, 60)
+    ) +
+    coord_equal() +
+    theme_bw() +
+    labs(
+      x = "iTRAQI predicted time (mins)",
+      y = "Observed travel time (mins)"
+    )
 }

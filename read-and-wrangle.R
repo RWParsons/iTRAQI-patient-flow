@@ -180,6 +180,7 @@ df_facilities <-
   filter(!FACILITY_NAME_Clean %in% df_new_facilities_with_coords$FACILITY_NAME_Clean) |> 
   bind_rows(df_new_facilities_with_coords)
 
+# TODO: add ages to df_times_short
 
 saveRDS(df_itraqi_times, "app/fixtures/df_itraqi_times.rds")
 saveRDS(df_facilities, "app/fixtures/df_facilities.rds")

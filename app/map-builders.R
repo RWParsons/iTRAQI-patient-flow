@@ -232,6 +232,12 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     ungroup() |> 
     (\(.data) cbind(.data, itraqi_pred = add_predicted_iTRAQI_times(x=.data$xcoord, y = .data$ycoord)))()
   
+  # TODO:
+    # > add variable for final facility 
+    # > add variable for age group
+  
+  # age_cats <- cut(0, 100)
+  
   observed_paths_processed <-
     observed_paths_clean |>
     left_join(select(itraqi_pred_times_df, pu_id, itraqi_pred), by = "pu_id") |> 
