@@ -25,6 +25,32 @@ df_amb <- haven::read_spss(file.path(data_dir, "D_Table_AmbulanceContent.sav"))
 df_ages <- haven::read_spss(file.path(data_dir, "D_Table_HospitalContent.sav"), col_select = c("pu_id", "PAT_AGE"))
 
 
+### add death flags to observed data
+# take earliest flag (order: QAS-ED-Hosp) and add label to popup if any=1
+df_death_flags2 <-
+  df_death_flags |> 
+  mutate(across(!pu_id, \(x) ifelse(is.na(x), 0, x))) |> 
+  pivot_longer(!pu_id) |> 
+  group_by(pu_id) |> 
+  slice(1:which.max(value)) |> 
+  ungroup() |> 
+  filter(value %in% c(1, 2)) |> 
+  select(pu_id, death_flag = name) |>
+  mutate(
+    pu_id = paste0("ID-", pu_id),
+    death_flag = case_when(
+      death_flag == "QASDeceasedEnc" ~ "QAS",
+      death_flag == "HospDiedFlag" ~ "Hospital",
+      TRUE ~ "ED"
+    )
+  ) |> 
+  mutate(death_flag = factor(death_flag, levels = c("QAS", "ED", "Hospital"))) |> 
+  group_by(pu_id) |> 
+  arrange(death_flag) |> 
+  slice(1) |> 
+  ungroup() |> 
+  mutate(death_flag = as.character(death_flag))
+
 
 ### rearrange observed data (`df_times`) into the same/similar format to df_itraqi_times, so that it can be used in the app
 
@@ -121,38 +147,44 @@ df_times_short <- lapply(
   (\(x) do.call("rbind", x))() |>
   mutate(pu_id = paste0("ID-", pu_id)) # make pu_id a character so that it works nicer as an ID for leaflet
 
+f_clean_final_facility <- function(x) {
+  case_when(
+    x %in% c("RBWH", "PRINCESS ALEXANDRA", "QCH") ~ "Brisbane (RBWH/PA/QCH)",
+    x == "TOWNSVILLE" ~ x,
+    x == "GOLD COAST" ~ x,
+    .default = "OTHER"
+  )
+}
 
-### add death flags to observed data
-# take earliest flag (order: QAS-ED-Hosp) and add label to popup if any=1
-df_death_flags2 <-
-  df_death_flags |> 
-  mutate(across(!pu_id, \(x) ifelse(is.na(x), 0, x))) |> 
-  pivot_longer(!pu_id) |> 
+df_final_facility <-
+  df_times_short |> 
   group_by(pu_id) |> 
-  slice(1:which.max(value)) |> 
+  select(pu_id, FACILITY_NAME_Clean) |> 
+  slice(n()) |> 
   ungroup() |> 
-  filter(value %in% c(1, 2)) |> 
-  select(pu_id, death_flag = name) |>
-  mutate(
-    pu_id = paste0("ID-", pu_id),
-    death_flag = case_when(
-      death_flag == "QASDeceasedEnc" ~ "QAS",
-      death_flag == "HospDiedFlag" ~ "Hospital",
-      TRUE ~ "ED"
-    )
-  ) |> 
-  mutate(death_flag = factor(death_flag, levels = c("QAS", "ED", "Hospital"))) |> 
+  rename(final_facility = FACILITY_NAME_Clean) |> 
+  mutate(final_facility_grp = f_clean_final_facility(final_facility),
+         final_facility_lab = case_when(
+           final_facility_grp == "OTHER" ~ glue::glue("OTHER ({final_facility})"),
+           final_facility_grp == "Brisbane (RBWH/PA/QCH)" ~ glue::glue("BRISBANE ({final_facility})"),
+           .default = final_facility
+         ))
+
+
+df_ages2 <-
+  df_ages |> 
+  mutate(pu_id = paste0("ID-", pu_id)) |> 
   group_by(pu_id) |> 
-  arrange(death_flag) |> 
   slice(1) |> 
-  ungroup() |> 
-  mutate(death_flag = as.character(death_flag))
+  ungroup()
 
-df_times_short <- 
+# add ages and final destination(!!) to df_times_short
+df_times_short2 <-
   df_times_short |> 
   left_join(df_death_flags2, by = "pu_id") |> 
-  mutate(death_flag = replace_na(death_flag, "Survived"))
-
+  mutate(death_flag = replace_na(death_flag, "Survived")) |> 
+  left_join(df_ages2, by = "pu_id") |> 
+  left_join(df_final_facility, by = "pu_id")
 
 
 # add facilities and their coords for those referred to in the RSQ pathways (iTRAQI) but not in the df_facilities
@@ -180,8 +212,6 @@ df_facilities <-
   filter(!FACILITY_NAME_Clean %in% df_new_facilities_with_coords$FACILITY_NAME_Clean) |> 
   bind_rows(df_new_facilities_with_coords)
 
-# TODO: add ages to df_times_short
-
-saveRDS(df_itraqi_times, "app/fixtures/df_itraqi_times.rds")
-saveRDS(df_facilities, "app/fixtures/df_facilities.rds")
-saveRDS(df_times_short, "app/fixtures/df_times_short.rds")
+saveRDS(df_itraqi_times, "app/fixtures/_df_itraqi_times.rds")
+saveRDS(df_facilities, "app/fixtures/_df_facilities.rds")
+saveRDS(df_times_short2, "app/fixtures/_df_times_short.rds")
