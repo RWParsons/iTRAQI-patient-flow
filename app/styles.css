@@ -16,3 +16,35 @@ div.outer {
 .leaflet-container {
   background-color: white !important;
 }
+
+
+#map {
+  height: calc(100vh - 57px) !important;
+}
+
+/*
+.card:nth-of-type(1) {
+  margin-top: 30px;
+  position: absolute;
+  z-index: 1;
+  opacity: 0.9;
+  width: 300px;
+}
+*/
+
+.card:nth-of-type(1) {
+  z-index: 1;
+  opacity: 0.9;
+}
+
+#burger, #burger:hover {
+  font-size: medium;
+  background-color: transparent;
+  border-color: transparent;
+  margin-left: 8px;
+  margin-top: 10px;         
+}
+
+#burger:focus {
+  outline: 0;
+}

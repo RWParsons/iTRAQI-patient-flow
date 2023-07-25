@@ -9,8 +9,9 @@ ui_map <- function(id) {
       tags$script(src = file.path(here::here(), "app", "script.js"))
     ),
     tagList(
-      leafletOutput(ns("map"), width = "100%", height = "100%"),
-      ui_map_filters(ns("filter"))
+      # ui_filter_boxes("test"),
+      ui_map_filters(ns("filter")),
+      leafletOutput(ns("map"), width = "100%", height = "100%")
     )
   )
 }
