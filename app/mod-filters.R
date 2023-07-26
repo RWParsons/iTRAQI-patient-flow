@@ -64,6 +64,16 @@ ui_map_filters <- function(id) {
                 choices = death_flags,
                 selected = death_flags
               )
+            ),
+            bs4AccordionItem(
+              id = ns("acc-ages"),
+              title = "Age",
+              checkboxGroupInput(
+                inputId = ns("age_category"),
+                label = NULL,
+                choices = age_cats,
+                selected = age_cats
+              )
             )
           )
         ),
@@ -111,12 +121,14 @@ server_map_filters <- function(id, passMap) {
       input$path_categories,
       input$death_flags_cb,
       input$travel_time_marker_col,
-      input$marker_groups
+      input$marker_groups,
+      input$age_category
     ), ignoreNULL = FALSE, {
       group_ids <- get_groups_path_cats(
         observed_paths = observed_paths,
         path_cats = input$path_categories,
-        death_flag_select = input$death_flags_cb
+        death_flag_select = input$death_flags_cb,
+        age_cats_select = input$age_category
       )
 
       if (input$travel_time_marker_col) {
@@ -176,6 +188,9 @@ server_map_filters <- function(id, passMap) {
       })
 
       output$freq_table <- renderTable({
+        age_cats_select <- input$age_category
+        age_cats_select[age_cats_select == ""] <- NA
+
         # browser()
         df_op <-
           observed_paths |>
@@ -200,7 +215,11 @@ server_map_filters <- function(id, passMap) {
 
         df_filtered_freq <-
           df_op |>
-          filter(path_category %in% input$path_categories, death_flag %in% input$death_flags_cb) |>
+          filter(
+            path_category %in% input$path_categories,
+            death_flag %in% input$death_flags_cb,
+            cut(PAT_AGE, breaks = age_cat_breaks) %in% age_cats_select
+          ) |>
           group_by(path_category, death_flag, .drop = FALSE) |>
           summarize(n_filtered = n()) |>
           pivot_wider(names_from = death_flag, values_from = n_filtered) |>
