@@ -5,140 +5,82 @@ source(file.path(here::here(), "app", "setShapeStyle.R"))
 ui_map_filters <- function(id) {
   ns <- NS(id)
   tagList(
-    br(),
-    fluidRow(style='z-index:1',
-      box(
-        title = "Map controls",
-        id = ns("panelLeft"),
-        height = "100%",
-        width = 6,
-        collapsible = TRUE,
-        collapsed = TRUE,
-        actionButton(ns("browser"), "browser"),
-        h4("Path adherence"),
-        tableOutput(ns("freq_table")),
-        bs4Accordion(
-          id = ns("acc"),
-          width = 10,
-          bs4AccordionItem(
-            id = ns("acc1"),
-            title = "Colours",
-            collapsed = TRUE,
-            materialSwitch(
-              inputId = ns("acute_raster_select"),
-              label = "iTRAQI acute raster",
-              status = "danger"
-            ),
-            materialSwitch(
-              inputId = ns("travel_time_marker_col"),
-              label = "Colour markers by travel time",
-              status = "danger"
-            ),
-          ),
-          bs4AccordionItem(
-            id = ns("acc2"),
-            title = "Filters",
-            checkboxGroupInput(
-              inputId = ns("marker_groups"),
-              label = NULL,
-              choices = c("iTRAQI points", "observed points"),
-              selected = c("iTRAQI points", "observed points")
-            ),
-            checkboxGroupInput(
-              inputId = ns("path_categories"),
-              label = NULL,
-              choices = path_cats,
-              selected = path_cats
-            ),
-            h4("Death flag"),
-            checkboxGroupInput(
-              inputId = ns("death_flags_cb"),
-              label = NULL,
-              choices = death_flags,
-              selected = death_flags
-            ),
-          )
-        )
-      ),
-      
-      
-      box(
-        title = "Plot",
-        id = ns("plotPanel"),
-        height = "100%",
-        collapsible = TRUE,
-        collapsed = TRUE,
-        radioGroupButtons(
-          inputId = ns("plot_time_col"),
-          label = "",
-          choices = c("iTRAQI predicted time", "Observed time"),
-          status = "primary"
-        ),
-        plotOutput(
-          ns("plot"),
-          brush = brushOpts(ns("plot_brush"))
-        )
+    absolutePanel(
+      width = "calc(100vw - 70px)", top = 20, left = 35, right = 35,
+      fluidRow(style='z-index:10',
+               box(
+                 title = "Map controls",
+                 id = ns("panelLeft"),
+                 height = "100%",
+                 width = 6,
+                 collapsible = TRUE,
+                 collapsed = TRUE,
+                 actionButton(ns("browser"), "browser"),
+                 h4("Path adherence"),
+                 tableOutput(ns("freq_table")),
+                 bs4Accordion(
+                   id = ns("acc"),
+                   width = 10,
+                   bs4AccordionItem(
+                     id = ns("acc1"),
+                     title = "Colours",
+                     collapsed = TRUE,
+                     materialSwitch(
+                       inputId = ns("acute_raster_select"),
+                       label = "iTRAQI acute raster",
+                       status = "danger"
+                     ),
+                     materialSwitch(
+                       inputId = ns("travel_time_marker_col"),
+                       label = "Colour markers by travel time",
+                       status = "danger"
+                     ),
+                   ),
+                   bs4AccordionItem(
+                     id = ns("acc2"),
+                     title = "Filters",
+                     checkboxGroupInput(
+                       inputId = ns("marker_groups"),
+                       label = NULL,
+                       choices = c("iTRAQI points", "observed points"),
+                       selected = c("iTRAQI points", "observed points")
+                     ),
+                     checkboxGroupInput(
+                       inputId = ns("path_categories"),
+                       label = NULL,
+                       choices = path_cats,
+                       selected = path_cats
+                     ),
+                     h4("Death flag"),
+                     checkboxGroupInput(
+                       inputId = ns("death_flags_cb"),
+                       label = NULL,
+                       choices = death_flags,
+                       selected = death_flags
+                     ),
+                   )
+                 )
+               ),
+               
+               box(
+                 title = "Plot",
+                 id = ns("plotPanel"),
+                 height = "100%",
+                 collapsible = TRUE,
+                 collapsed = TRUE,
+                 radioGroupButtons(
+                   inputId = ns("plot_time_col"),
+                   label = "",
+                   choices = c("iTRAQI predicted time", "Observed time"),
+                   status = "primary"
+                 ),
+                 plotOutput(
+                   ns("plot"),
+                   brush = brushOpts(ns("plot_brush"))
+                 )
+               )
       )
     )
-    
-    
-    
-    
-    # filters panel
-    # absolutePanel(
-    #   id = "controls", class = "panel panel-default", fixed = TRUE,
-    #   draggable = TRUE, top = 300, left = "auto", right = 10, bottom = "auto",
-    #   width = 510, height = 600,
-    #   h4("Path adherence"),
-    #   # actionButton(ns("browser"), "browser"),
-    #   # materialSwitch(
-    #   #   inputId = ns("acute_raster_select"),
-    #   #   label = "iTRAQI acute raster",
-    #   #   status = "danger"
-    #   # ),
-    #   materialSwitch(
-    #     inputId = ns("travel_time_marker_col"),
-    #     label = "Colour markers by travel time",
-    #     status = "danger"
-    #   ),
-    #   checkboxGroupInput(
-    #     inputId = ns("marker_groups"),
-    #     label = NULL,
-    #     choices = c("iTRAQI points", "observed points"),
-    #     selected = c("iTRAQI points", "observed points")
-    #   ),
-    #   checkboxGroupInput(
-    #     inputId = ns("path_categories"),
-    #     label = NULL,
-    #     choices = path_cats,
-    #     selected = path_cats
-    #   ),
-    #   h4("Death flag"),
-    #   checkboxGroupInput(
-    #     inputId = ns("death_flags_cb"),
-    #     label = NULL,
-    #     choices = death_flags,
-    #     selected = death_flags
-    #   ),
-    #   tableOutput(ns("freq_table"))
-    # ),
-    # plot panel
-    # absolutePanel(
-    #   id = "plot", class = "panel panel-default", fixed = TRUE,
-    #   # draggable = TRUE,
-    #   top = 300, left = 10, right = "auto", bottom = "auto",
-    #   width = 400, height = 400,
-    #   # radioGroupButtons(
-    #   #   inputId = ns("plot_time_col"),
-    #   #   label = "",
-    #   #   choices = c("iTRAQI predicted time", "Observed time"),
-    #   #   status = "primary"
-    #   # ),
-    #   # plotOutput(
-    #   #   ns("plot"),
-    #   #   brush = brushOpts(ns("plot_brush"))
-    #   # )
-    # )
   )
 }
 

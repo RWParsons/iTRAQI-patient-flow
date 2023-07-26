@@ -44,7 +44,6 @@ bodyTag <- dashboardBody(
   ),
   
   tagList(
-    # ui_filter_boxes("test"),
     ui_map("main")
   )
 )
@@ -55,24 +54,9 @@ bodyTag$children[[1]]$attribs$style <- "padding: 0px 0px !important"
 ui <- dashboardPage(
   dark = TRUE,
   header = dashboardHeader(),
-  
   sidebar = dashboardSidebar(width = "0px"),
   body = bodyTag
 )
-
-# ui <- navbarPage(
-#   "iTRAQI-patient-flow",
-#   id = "nav",
-#   tabPanel(
-#     "Map",
-#     useShinyjs(),
-#     tagList(
-#       ui_map("main")
-#     )
-#   )
-# )
-
-
 
 server <- function(input, output, session) {
   server_map("main")
