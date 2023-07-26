@@ -176,83 +176,86 @@ process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths)
     split(observed_paths_clean$pu_id) |>
     map(categorise_path) |>
     (\(x) do.call("c", x))()
-  
+
   df_path_categories <- data.frame(
     pu_id = names(path_categories),
     path_category = unlist(path_categories)
   ) |>
     remove_rownames()
-  
+
   add_predicted_iTRAQI_times <- function(x, y) {
-    acute_raster_df <- 
-      get_iTRAQI_raster() |> 
-      subset(1) |> 
-      raster::as.data.frame(xy = TRUE) |> 
+    acute_raster_df <-
+      get_iTRAQI_raster() |>
+      subset(1) |>
+      raster::as.data.frame(xy = TRUE) |>
       na.omit()
-    
-    acute_raster_sf_pt <- 
-      acute_raster_df |> 
+
+    acute_raster_sf_pt <-
+      acute_raster_df |>
       split(1:nrow(acute_raster_df)) |>
       map(\(x){
         unlist(x) |>
           st_point()
       }) |>
       st_sfc()
-    
+
     f_get_pred_from_coord <- function(coord_pair, xcoord, ycoord, ...) {
-      if(!missing(coord_pair)) {
+      if (!missing(coord_pair)) {
         xcoord <- coord_pair$x
         ycoord <- coord_pair$y
       }
-      
-      distances_from_point <- 
-        c(xcoord, ycoord) |> 
-        (\(coord_pair)sf::st_distance(sf::st_point(coord_pair), acute_raster_sf_pt))() |> 
-        t() |> 
-        as.data.frame.matrix() |> 
-        cbind(acute_raster_df) |> 
+
+      distances_from_point <-
+        c(xcoord, ycoord) |>
+        (\(coord_pair)sf::st_distance(sf::st_point(coord_pair), acute_raster_sf_pt))() |>
+        t() |>
+        as.data.frame.matrix() |>
+        cbind(acute_raster_df) |>
         dplyr::rename(distance = 1)
-      
+
       # return closest predicted value
-      distances_from_point$var1.pred[which.min(distances_from_point$distance)] 
+      distances_from_point$var1.pred[which.min(distances_from_point$distance)]
     }
-    
+
     cl <- parallel::makeCluster(parallel::detectCores())
     pbapply::pblapply(
       split(data.frame(x, y), 1:length(x)),
       f_get_pred_from_coord,
-      cl=cl
+      cl = cl
     ) |> unlist()
   }
-  
-  itraqi_pred_times_df <- 
-    observed_paths_clean |> 
-    group_by(pu_id) |> 
-    slice(1) |> 
-    ungroup() |> 
-    (\(.data) cbind(.data, itraqi_pred = add_predicted_iTRAQI_times(x=.data$xcoord, y = .data$ycoord)))()
-  
+
+  itraqi_pred_times_df <-
+    observed_paths_clean |>
+    group_by(pu_id) |>
+    slice(1) |>
+    ungroup() |>
+    (\(.data) cbind(.data, itraqi_pred = add_predicted_iTRAQI_times(x = .data$xcoord, y = .data$ycoord)))()
+
   # TODO:
-    # > add variable for final facility 
-    # > add variable for age group
-  
+  # > add variable for final facility
+  # > add variable for age group
+
   # age_cats <- cut(0, 100)
-  
+
   observed_paths_processed <-
     observed_paths_clean |>
-    left_join(select(itraqi_pred_times_df, pu_id, itraqi_pred), by = "pu_id") |> 
+    left_join(select(itraqi_pred_times_df, pu_id, itraqi_pred), by = "pu_id") |>
     left_join(df_path_categories) |>
     mutate(
       Arrival_ReferralPathway = haven::as_factor(Arrival_ReferralPathway),
       facility_and_mode = glue::glue(
         "{FACILITY_NAME_Clean} ",
         "(via {Arrival_ReferralPathway}; ",
-        "duration: {round(stay_duration)}mins)")
+        "duration: {round(stay_duration)}mins)"
+      )
     ) |>
     group_by(pu_id) |>
-    mutate(start_time = min(DateTimePoints),
-           end_time = max(DateTimePoints),
-           total_time = as.numeric(difftime(end_time, start_time, units = "mins"))) |> 
+    mutate(
+      start_time = min(DateTimePoints),
+      end_time = max(DateTimePoints),
+      total_time = as.numeric(difftime(end_time, start_time, units = "mins"))
+    ) |>
     mutate(popup = glue::glue(
       "<b>pu_id</b>: {pu_id} <br><br>",
       "<b>travel time</b>: {round(total_time)}<br><br>",

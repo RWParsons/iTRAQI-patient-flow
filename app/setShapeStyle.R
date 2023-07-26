@@ -22,10 +22,10 @@ setShapeStyle <- function(map, data = getMapData(map), layerId,
   options <- evalFormula(options, data = data)
   # make them the same length (by building a data.frame)
   options <- do.call(data.frame, c(options, list(stringsAsFactors = FALSE)))
-  
+
   layerId <- options[[1]]
   style <- options[-1] # drop layer column
-  
+
   # print(list(style=style))
   leaflet::invokeMethod(map, data, "setStyle", "shape", layerId, style)
 }

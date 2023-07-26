@@ -42,13 +42,12 @@ bodyTag <- dashboardBody(
   tags$head(
     includeCSS("styles.css")
   ),
-  
   tagList(
     ui_map("main")
   )
 )
 
-bodyTag$children[[1]]$attribs$style <- "padding: 0px 0px !important" 
+bodyTag$children[[1]]$attribs$style <- "padding: 0px 0px !important"
 
 
 ui <- dashboardPage(
