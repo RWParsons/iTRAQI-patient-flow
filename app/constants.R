@@ -3,10 +3,10 @@
 fixtures_path <- file.path(here::here(), "app", "fixtures")
 
 map_bounds <- list(
-  lng1 = 115,
-  lat1 = -45.00,
-  lng2 = 170,
-  lat2 = -5
+  lng1 = 200,
+  lat1 = -100,
+  lng2 = 250,
+  lat2 = -100
 )
 
 clean_transport_mode <- function(x) {
