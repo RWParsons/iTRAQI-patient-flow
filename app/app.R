@@ -40,7 +40,7 @@ moduleServer <- function(id, module) {
 
 bodyTag <- dashboardBody(
   tags$head(
-    includeCSS("styles.css")
+    includeCSS(file.path(app_dir, "styles.css"))
   ),
   tagList(
     ui_map("main")
