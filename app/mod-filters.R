@@ -74,6 +74,16 @@ ui_map_filters <- function(id) {
                 choices = age_cats,
                 selected = age_cats
               )
+            ),
+            bs4AccordionItem(
+              id = ns("acc-facility"),
+              title = "Final facility",
+              checkboxGroupInput(
+                inputId = ns("final_facility_group"),
+                label = NULL,
+                choices = final_facility_cats,
+                selected = final_facility_cats
+              )
             )
           )
         ),
@@ -123,7 +133,8 @@ server_map_filters <- function(id, passMap) {
         path_cats = input$path_categories,
         death_flag_select = input$death_flags_cb,
         age_cats_select = input$age_category,
-        travel_time_marker_col = input$travel_time_marker_col
+        travel_time_marker_col = input$travel_time_marker_col,
+        final_facility_select = input$final_facility_group
       )
     })
     
@@ -150,7 +161,7 @@ server_map_filters <- function(id, passMap) {
       )
     })
     
-    observeEvent(list(input$marker_groups, input$travel_time_marker_col), {
+    observeEvent(list(input$marker_groups, input$travel_time_marker_col, group_ids()), {
       if ("observed points" %in% input$marker_groups) {
         passMap() |>
           hideGroup(group_ids()$hide_groups) |>
