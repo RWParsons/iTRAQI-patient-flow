@@ -86,6 +86,7 @@ fx_shorten_path <- function(pu_id_) {
     left_join(select(df_facilities, FACILITY_NAME_Clean, Latitude, Longitude, NeuroSurgMajor, FCLTY_ID), by = "FACILITY_NAME_Clean") |>
     mutate(X_COORD = Longitude, Y_COORD = Latitude) |>
     select(-Latitude, -Longitude) |>
+    arrange(DateTimePoints) |> 
     slice(1:which.min(NeuroSurgMajor))
 
   f_get_duration <- function(d, time_wp, date_time) {
