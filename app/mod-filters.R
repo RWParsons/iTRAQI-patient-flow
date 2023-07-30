@@ -155,21 +155,12 @@ server_map_filters <- function(id, passMap) {
       }
 
       output$plot <- renderPlot({
-        # browser()
-
-        group_ids_plot <- group_ids
-        # group_ids_plot$hide_groups <- str_remove(group_ids$hide_groups, "traveltime-")
-        # group_ids_plot$show_groups <- str_remove(group_ids$show_groups, "traveltime-")
         plot_df <-
-          observed_paths |>
-          filter(
-            !pu_id %in% group_ids_plot$hide_groups,
-            pu_id %in% group_ids_plot$show_groups
-          ) |>
-          select(pu_id, itraqi_pred, total_time) |>
+          observed_paths |> 
+          filter(pu_id %in% paste0("ID-", unique(str_extract(group_ids$show_groups, "[0-9]*$")))) |> 
+          select(pu_id, itraqi_pred, total_time) |> 
           distinct()
-
-
+        
         make_plot(plot_df, input$plot_time_col)
       })
 
