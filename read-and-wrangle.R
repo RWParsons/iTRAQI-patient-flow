@@ -129,7 +129,7 @@ fx_shorten_path <- function(pu_id_) {
         pull(DateTimePoints)
     }
 
-    return(as.numeric(difftime(end_time, start_row$DateTimePoints)))
+    return(as.numeric(difftime(end_time, start_row$DateTimePoints))) # TODO: units = "mins" ??
   }
 
 
