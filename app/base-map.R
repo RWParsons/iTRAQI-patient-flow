@@ -48,8 +48,8 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       lat = facilities$ycoord,
       radius = 3,
       fillOpacity = 0.2,
-      fillColor = "red",
-      color = "red"
+      fillColor = "black",
+      color = "black"
     ) |>
     addCircleMarkers(
       layerId = as.numeric(str_remove(observed_paths$pu_id, "ID-")),
@@ -58,8 +58,8 @@ base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, obser
       lat = observed_paths$ycoord,
       radius = 2,
       fillOpacity = 0,
-      fillColor = "orange",
-      color = "orange",
+      fillColor = "red",
+      color = "red",
       popup = observed_paths$popup
     ) |>
     addCircleMarkers(
