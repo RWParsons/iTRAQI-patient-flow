@@ -128,8 +128,8 @@ fx_shorten_path <- function(pu_id_) {
         slice(which.max(TimeWayPoint == "Hosp_END_DATETIME_Formatted")) |>
         pull(DateTimePoints)
     }
-
-    return(as.numeric(difftime(end_time, start_row$DateTimePoints))) # TODO: units = "mins" ??
+    
+    return(as.numeric(difftime(end_time, start_row$DateTimePoints, units = "mins")))
   }
 
 
