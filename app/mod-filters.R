@@ -134,15 +134,13 @@ server_map_filters <- function(id, passMap) {
         death_flag_select = input$death_flags_cb,
         age_cats_select = input$age_category,
         travel_time_marker_col = input$travel_time_marker_col,
-        final_facility_select = input$final_facility_group
+        final_facility_select = input$final_facility_group,
+        brushed_points =  input$plot_brush
       )
     })
     
     plot_df <- reactive({
-      observed_paths |> 
-        filter(pu_id %in% clean_show_pu_ids(group_ids()$show_groups)) |> 
-        select(pu_id, itraqi_pred, total_time) |> 
-        distinct()
+      get_plot_df(group_ids()$plot_show_groups)
     })
       
     

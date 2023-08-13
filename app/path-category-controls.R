@@ -14,7 +14,8 @@ get_groups_path_cats <- function(observed_paths,
                                  death_flag_select, 
                                  age_cats_select, 
                                  travel_time_marker_col,
-                                 final_facility_select) {
+                                 final_facility_select,
+                                 brushed_points) {
   age_cats_select[age_cats_select == ""] <- NA
 
   show_groups <- observed_paths |>
@@ -25,7 +26,14 @@ get_groups_path_cats <- function(observed_paths,
       final_facility_grp %in% final_facility_select
     ) |>
     pull(pu_id)
-
+  
+  plot_show_groups <- show_groups
+  
+  if(!is.null(brushed_points)) {
+    plot_df <- get_plot_df(show_groups)  
+    show_groups <- brushedPoints(plot_df, brushed_points) |> pull(pu_id)
+  }
+  
   hide_groups <- observed_paths$pu_id[!observed_paths$pu_id %in% show_groups]
   
   if (travel_time_marker_col) {
@@ -37,6 +45,15 @@ get_groups_path_cats <- function(observed_paths,
   
   list(
     hide_groups = hide_groups,
-    show_groups = show_groups
+    show_groups = show_groups,
+    plot_show_groups = plot_show_groups
   )
+}
+
+
+get_plot_df <- function(keep_ids) {
+  observed_paths |> 
+    filter(pu_id %in% clean_show_pu_ids(keep_ids)) |> 
+    select(pu_id, itraqi_pred, total_time) |> 
+    distinct()
 }

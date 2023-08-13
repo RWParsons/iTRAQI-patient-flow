@@ -1,9 +1,6 @@
 # app.R
 
 # TODO
-#   > add plot to map similar to iTRAQI (x=predicted time, y=actual time) + geom_point() + geom_abline()
-#     with brush to filter markers on map
-
 
 # saveRDS(df_itraqi_times, "app/fixtures/df_itraqi_times.rds")
 # saveRDS(df_facilities, "app/fixtures/df_facilities.rds")
