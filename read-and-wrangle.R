@@ -218,6 +218,16 @@ df_facilities <-
   filter(!FACILITY_NAME_Clean %in% df_new_facilities_with_coords$FACILITY_NAME_Clean) |>
   bind_rows(df_new_facilities_with_coords)
 
+
+pu_id_scramble_df <- 
+  data.frame(pu_id_orig = sample(unique(df_times_short2$pu_id), replace=FALSE)) |> 
+  mutate(pu_id_new = paste0("ID-", row_number()))
+
+df_times_short3 <- inner_join(df_times_short2, pu_id_scramble_df, by = c("pu_id" = "pu_id_orig")) |> 
+  select(-pu_id) |> 
+  select(pu_id = pu_id_new, everything())
+
+
 saveRDS(df_itraqi_times, "app/fixtures/_df_itraqi_times.rds")
 saveRDS(df_facilities, "app/fixtures/_df_facilities.rds")
-saveRDS(df_times_short2, "app/fixtures/_df_times_short.rds")
+saveRDS(df_times_short3, "app/fixtures/_df_times_short.rds")
