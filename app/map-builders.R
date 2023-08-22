@@ -33,6 +33,9 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
   if ("polylines_df.rds" %in% list.files(fixtures_path)) {
     return(readRDS(file.path(fixtures_path, "polylines_df.rds")))
   }
+  if ("polylines_df.rds" %in% list.files(fixtures_path_shared)) {
+    return(readRDS(file.path(fixtures_path_shared, "polylines_df.rds")))
+  }
 
   palFac <- colorFactor("viridis", levels = 1:6, ordered = TRUE)
 
@@ -78,6 +81,9 @@ process_polyline_paths <- function(iTRAQI_paths, facilities) {
 process_observed_paths <- function(observed_paths, iTRAQI_paths, polyline_paths) {
   if ("observed_paths.rds" %in% list.files(fixtures_path)) {
     return(readRDS(file.path(fixtures_path, "observed_paths.rds")))
+  }
+  if ("observed_paths.rds" %in% list.files(fixtures_path_shared)) {
+    return(readRDS(file.path(fixtures_path_shared, "observed_paths.rds")))
   }
 
   iTRAQI_points <-
@@ -273,6 +279,10 @@ process_observed_polyline_paths <- function(observed_paths) {
   if ("observed_polylines_df.rds" %in% list.files(fixtures_path)) {
     return(readRDS(file.path(fixtures_path, "observed_polylines_df.rds")))
   }
+  if ("observed_polylines_df.rds" %in% list.files(fixtures_path_shared)) {
+    return(readRDS(file.path(fixtures_path_shared, "observed_polylines_df.rds")))
+  }
+  
   palFac <- colorFactor("viridis", levels = 1:6, ordered = TRUE)
   observed_paths <-
     observed_paths |>
