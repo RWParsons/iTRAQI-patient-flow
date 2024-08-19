@@ -4,7 +4,11 @@ path_cats <- c("NO HLC", "FOLLOWED ITRAQI", "DID NOT FOLLOW ITRAQI")
 death_flags <- c("Survived", "QAS", "Hospital", "ED")
 
 age_cat_breaks <- c(0, 16, 24, 65, 99)
-age_cats <- c(levels(cut(observed_paths$PAT_AGE, breaks = age_cat_breaks)), NA)
+
+get_age_cats <- function(observed_paths){
+  c(levels(cut(observed_paths$PAT_AGE, breaks = age_cat_breaks)), NA)
+}
+  
 
 final_facility_cats <- c("Brisbane (RBWH/PA/QCH)", "GOLD COAST", "OTHER", "TOWNSVILLE")
 

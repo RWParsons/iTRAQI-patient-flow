@@ -1,9 +1,9 @@
 # base-map.R
 
 base_map <- function(map_bounds, facilities, iTRAQI_paths, polyline_paths, observed_paths, observed_polyline_paths) {
-  if ("base-map.rds" %in% list.files(fixtures_path)) {
-    return(readRDS(file.path(fixtures_path, "base-map.rds")))
-  }
+  # if ("base-map.rds" %in% list.files(fixtures_path)) {
+  #   return(readRDS(file.path(fixtures_path, "base-map.rds")))
+  # }
 
   # load palettes and acute raster from iTRAQI GitHub repo
   source(file.path(here::here(), "app", "palettes.R"))

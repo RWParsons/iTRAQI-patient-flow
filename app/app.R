@@ -25,6 +25,7 @@ facilities <<- process_facilities(facilities)
 polyline_paths <<- process_polyline_paths(iTRAQI_paths, facilities)
 observed_paths <<- process_observed_paths(observed_paths, iTRAQI_paths, polyline_paths)
 observed_polyline_paths <<- process_observed_polyline_paths(observed_paths)
+age_cats <<- get_age_cats(observed_paths = observed_paths)
 
 source(file.path(app_dir, "mod-filters.R"))
 source(file.path(app_dir, "mod-map-tab.R"))
@@ -35,27 +36,42 @@ moduleServer <- function(id, module) {
   callModule(module, id)
 }
 
+library(shiny)
+library(bs4Dash)
 bodyTag <- dashboardBody(
-  tags$head(
-    includeCSS(file.path(app_dir, "styles.css"))
-  ),
-  tagList(
-    ui_map("main")
-  )
+  # tags$head(
+  #   includeCSS(file.path(app_dir, "styles.css"))
+  # ),
+  # tagList(
+  #   ui_map("main")
+  # )
 )
 
 bodyTag$children[[1]]$attribs$style <- "padding: 0px 0px !important"
 
 
 ui <- dashboardPage(
-  dark = TRUE,
+  # dark = TRUE,
   header = dashboardHeader(),
   sidebar = dashboardSidebar(width = "0px"),
   body = bodyTag
 )
 
 server <- function(input, output, session) {
-  server_map("main")
-  server_mapclick("main")
+  # server_map("main")
+  # server_mapclick("main")
 }
+shinyApp(ui, server)
+
+
+library(shiny)
+
+ui <- fluidPage(
+  
+)
+
+server <- function(input, output, session) {
+  
+}
+
 shinyApp(ui, server)
